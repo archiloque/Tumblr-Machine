@@ -10,22 +10,22 @@
 
 <div id="messages">
   <% if flash[:error] %>
-    <div id="error" class="flash"><%= flash[:error] %></div>
+      <div id="error" class="flash"><%= flash[:error] %></div>
   <% end %>
 
   <% if flash[:warning] %>
-    <div id="warning" class="flash"><%= flash[:warning] %></div>
+      <div id="warning" class="flash"><%= flash[:warning] %></div>
   <% end %>
 
   <% if flash[:notice] %>
-    <div id="notice" class="flash"><%= flash[:notice] %></div>
+      <div id="notice" class="flash"><%= flash[:notice] %></div>
   <% end %>
 </div>
 
 
 <h2>Add a tag</h2>
 
-<form action="/add_tag" method="post" >
+<form action="/add_tag" method="post">
   <ul class="inputElement">
     <li>
       <label for="tagName">Name</label>
@@ -41,6 +41,26 @@
   </ul>
 </form>
 <h2>Existing tags</h2>
+<table>
+  <thead>
+  <tr>
+    <th>Name</th>
+    <th>Value</th>
+    <th>Last Fetch Date</th>
+    <th>Posts</th>
+  </tr>
+  </thead>
+  <tbody>
+  <% @tags.each do |tag| %>
+      <tr>
+        <td><%= tag[:n] %></td>
+        <td><%= tag[:v] %></td>
+        <td><%= tag[:l] %></td>
+        <td><%= tag[:c] %></td>
+      </tr>
+  <% end %>
+  </tbody>
+</table>
 </body>
 </html>
 

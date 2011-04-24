@@ -43,20 +43,20 @@ class TumblrMachine< Sinatra::Base
     database.create_table :tags do
       primary_key :id, :type => Integer, :null => false
       Text :name, :null => false, :index => true, :unique => true
-      DateTime :last_fetch_date, :null => true
+      DateTime :last_fetch, :null => true
       Integer :value, :null => true
     end
 
     database.create_table :tumblrs do
       primary_key :id, :type => Integer, :null => false
       Text :name, :null => false, :index => true, :unique => true
-      DateTime :last_post_date, :null => true
+      DateTime :last_post, :null => true
     end
 
     database.create_table :posts do
       primary_key :id, :type => Integer, :null => false
       foreign_key :tumblr_id, :tumblrs
-      DateTime :last_fetch_date, :null => false
+      DateTime :last_fetch, :null => false
       Boolean :posted, :null => true, :index => true
       Integer :score, :null => false, :index => true
     end
@@ -84,6 +84,9 @@ class TumblrMachine< Sinatra::Base
 
   # admin
   get '/' do
+    @tags = database['select tags.name n, tags.last_fetch l, tags.value v, count(posts.id) c from tags, posts_tags, posts ' +
+                         'where tags.id = posts_tags.tag_id and posts_tags.post_id = posts.id' +
+                         ' order by tags.value desc, tags.last_fetch desc']
     erb :'admin.html'
   end
 
