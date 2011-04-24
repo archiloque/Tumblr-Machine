@@ -1,0 +1,51 @@
+body {
+  background-color: #F5F5F5;
+  font-family: Helvetica, "Helvetica Neue", "Lucida Grande", Verdana, sans-serif;
+  font-size: 12px;
+  color: #111111;
+  margin: 0;
+  padding: 0;
+}
+
+h1 {
+    font-weight: bold;
+    font-size: 36px;
+    text-align: center;
+}
+h2 {
+    padding-left: 5px;
+}
+
+.inputElement {
+    padding-left: 10px;
+}
+.inputElement li {
+    margin-bottom: 5px;
+    list-style-type: none;
+    list-style-position: inside;
+}
+
+#messages {
+  position: absolute;
+  top: 0;
+  right: 0;
+  color: black;
+  background-color: #F5F5F5;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+#notice {
+  border: 2px solid green;
+  padding: 2px;
+}
+
+#warning {
+  border: 2px solid orange;
+  padding: 2px;
+}
+
+#error {
+  border: 2px solid red;
+  padding: 2px;
+}

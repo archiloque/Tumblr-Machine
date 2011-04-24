@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <title>Tumblr machine admin</title>
+  <meta charset="utf-8">
+  <link href="/tumblr-machine.css" rel="stylesheet" type="text/css"/>
+</head>
+<body>
+<h1>Tumblr Machine</h1>
+
+<div id="messages">
+  <% if flash[:error] %>
+    <div id="error" class="flash"><%= flash[:error] %></div>
+  <% end %>
+
+  <% if flash[:warning] %>
+    <div id="warning" class="flash"><%= flash[:warning] %></div>
+  <% end %>
+
+  <% if flash[:notice] %>
+    <div id="notice" class="flash"><%= flash[:notice] %></div>
+  <% end %>
+</div>
+
+
+<h2>Add a tag</h2>
+
+<form action="/add_tag" method="post" >
+  <ul class="inputElement">
+    <li>
+      <label for="tagName">Name</label>
+      <input type="text" id="tagName" name="tagName" title="tag name">
+    </li>
+    <li>
+      <label for="tagValue">Value</label>
+      <input type="number" id="tagValue" name="tagValue" title="tag value">
+    </li>
+    <li>
+      <input name="add_tag" type="submit" value="Add"/>
+    </li>
+  </ul>
+</form>
+<h2>Existing tags</h2>
+</body>
+</html>
+
