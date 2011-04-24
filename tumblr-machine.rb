@@ -36,7 +36,7 @@ class TumblrMachine< Sinatra::Base
   use Rack::Session::Pool
   use Rack::Flash
 
-  require_relative 'lib/helpers'
+  Sequel.extension :blank
 
   #migrations
   migration 'create tables' do
@@ -58,6 +58,7 @@ class TumblrMachine< Sinatra::Base
       foreign_key :tumblr_id, :tumblrs
       DateTime :last_fetch_date, :null => false
       Boolean :posted, :null => true, :index => true
+      Integer :score, :null => false, :index => true
     end
 
     database.create_table :posts_tags do
@@ -96,23 +97,33 @@ class TumblrMachine< Sinatra::Base
       flash[:error] = 'Tag value is empty'
       redirect '/'
     else
-      value = value.to_i
-      if value == 0
-        value = nil
+      begin
+        value = Integer(value)
+      rescue ArgumentError
+        flash[:error] = "#{value} is not a valid value"
+        redirect '/'
       end
+        if value == 0
+          value = nil
+        end
 
-      if tag = Tag.first(:name => name)
-        tag.value = value
-        tag.insert
-        flash[:notice] = 'Tag updated'
-      else
-        if value
+        if tag = Tag.first(:name => name)
+          delta = (value || 0) - (tag.value || 0)
+          if delta == 0
+            flash[:notice] = 'Tag value not changed'
+          else
+            tag.value = value
+            tag.update(:value => value)
+            Post.filter('posts.id in (select posts_tags.post_id from posts_tags where posts_tags.tag_id = ?)', tag.id).update(:score => :score + delta)
+            flash[:notice] = 'Tag updated'
+          end
+        elsif value
           Tag.create(:name => name, :value => value)
           flash[:notice] = 'Tag added'
         else
           flash[:notice] = 'Tag did not exist and value is 0 so nothing done'
         end
-      end
+
       redirect '/'
     end
   end
