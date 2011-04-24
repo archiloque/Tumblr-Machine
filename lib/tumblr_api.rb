@@ -44,13 +44,16 @@ class TumblrApi
   # - post_id    the id of the post to reblog
   # - reblog_key the reblog key of the post to reblog
   # - date       the date to post
-  def self.reblog email, password, tumblr, post_id, reblog_key, date = nil
+  def self.reblog email, password, tumblr, post_id, reblog_key, tags = nil, date = nil
     params = {'email' => email,
               'password' => password,
               'group' => "#{tumblr}.tumblr.com",
               'post-id' => post_id,
               'reblog-key' => reblog_key,
               'generator' => 'Tumblr Machine'}
+    if tags
+      params['tags'] = tags.join(',')
+    end
     if date
       params['state'] = 'queue'
       params['publish-on'] = date.to_s

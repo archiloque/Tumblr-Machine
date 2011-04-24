@@ -39,6 +39,11 @@ class Tumblr < Sequel::Model
 end
 
 class Post < Sequel::Model
-  many_to_many :tags
+  many_to_many :tags, :order => [:value.desc, :name.asc]
   many_to_one :tumblr
+
+  def before_destroy
+    super
+    remove_all_tags
+  end
 end
