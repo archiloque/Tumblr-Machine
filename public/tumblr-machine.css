@@ -73,3 +73,11 @@ td, th {
 tbody tr:nth-child(odd) {
     background-color: #eee;
 }
+
+a {
+    color: #111111;
+    text-decoration: none;
+}
+a:hover {
+    text-decoration: underline;
+}
