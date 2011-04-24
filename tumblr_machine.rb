@@ -17,6 +17,12 @@ require_relative 'lib/tumblr_api'
 
 ENV['DATABASE_URL'] ||= "sqlite://#{Dir.pwd}/tumblr_machine.sqlite3"
 
+['email', 'password', 'tumblr_name'].each do |p|
+  unless ENV.include? p
+    raise "Missing #{p} environment variable"
+  end
+end
+
 class TumblrMachine< Sinatra::Base
 
   set :app_file, __FILE__
@@ -96,7 +102,7 @@ class TumblrMachine< Sinatra::Base
     tag = Tag.filter(:fetch => true).order(:last_fetch.asc).first
     if tag
       TumblrApi.fetch_tag(tag.name).each do |post|
-        unless Post.first(:id => post[:id])
+        unless (Post.first(:id => post[:id])) || (post[:tumblr_name] == ENV[:tumblr_name])
           post_db = Post.new
           post_db.id = post[:id]
           unless tumblr = Tumblr.first(:name => post[:tumblr_name])
