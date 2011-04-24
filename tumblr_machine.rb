@@ -102,7 +102,7 @@ class TumblrMachine< Sinatra::Base
     tag = Tag.filter(:fetch => true).order(:last_fetch.asc).first
     if tag
       TumblrApi.fetch_tag(tag.name).each do |post|
-        unless (Post.first(:id => post[:id])) || (post[:tumblr_name] == ENV[:tumblr_name])
+        unless (Post.first(:id => post[:id])) || (post[:tumblr_name] == ENV['tumblr_name'])
           post_db = Post.new
           post_db.id = post[:id]
           unless tumblr = Tumblr.first(:name => post[:tumblr_name])
@@ -130,8 +130,10 @@ class TumblrMachine< Sinatra::Base
         end
       end
       tag.update(:last_fetch => DateTime.now)
+      "Fetched #{tag.name}\n"
+    else
+      "Nothing to fetch\n"
     end
-    "OK"
   end
 
   get '/post' do
@@ -141,7 +143,11 @@ class TumblrMachine< Sinatra::Base
       TumblrApi.reblog(ENV['email'], ENV['password'], ENV['tumblr_name'], post.id, reblog_key)
       post.update(:posted => true)
       Tumblr.filter(:id => post.tumblr_id).update(:last_reblogged_post => DateTime.now)
+      "Posted #{post.tumblr.url}/post/#{post.id}\n"
+    else
+      "Nothing to post\n"
     end
+
   end
 
 end
