@@ -1,2 +1,2 @@
-require './tumblr-machine'
+require './tumblr_machine'
 run TumblrMachine

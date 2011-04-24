@@ -23,20 +23,21 @@
 </div>
 
 
-<h2>Add a tag</h2>
+<h2>Edit tag</h2>
 
 <form action="/add_tag" method="post">
   <ul class="inputElement">
     <li>
-      <label for="tagName">Name</label>
-      <input type="text" id="tagName" name="tagName" title="tag name">
+      <label>Name <input type="text" name="tagName"></label>
     </li>
     <li>
-      <label for="tagValue">Value</label>
-      <input type="number" id="tagValue" name="tagValue" title="tag value">
+      <label>Value <input type="number" name="tagValue"></label>
     </li>
     <li>
-      <input name="add_tag" type="submit" value="Add"/>
+      <label>Fetch <input type="checkbox" name="tagFetch"checked="checked" ></label>
+    </li>
+    <li>
+      <input name="add_tag" type="submit" value="Submit"/>
     </li>
   </ul>
 </form>
@@ -46,6 +47,7 @@
   <tr>
     <th>Name</th>
     <th>Value</th>
+    <th>Fetch</th>
     <th>Last Fetch Date</th>
     <th>Posts</th>
   </tr>
@@ -55,7 +57,8 @@
       <tr>
         <td><%= tag[:n] %></td>
         <td><%= tag[:v] %></td>
-        <td><%= tag[:l] %></td>
+        <td><%= tag[:f] ? 'true' : 'false' %></td>
+        <td><%= display_date_time(tag[:f] ? tag[:l] : nil) %></td>
         <td><%= tag[:c] %></td>
       </tr>
   <% end %>
