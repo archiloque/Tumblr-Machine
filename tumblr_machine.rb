@@ -134,4 +134,14 @@ class TumblrMachine< Sinatra::Base
     "OK"
   end
 
+  get '/post' do
+    post = Post.eager(:tumblr).filter(:posted => false).filter(:tumblr_id => Tumblr.select(:id).filter('tumblrs.last_reblogged_post is null or tumblrs.last_reblogged_post > ?', (DateTime.now << 1))).order(:score.desc).first
+    if post
+      reblog_key = TumblrApi.reblog_key(post.tumblr.url, post.id)
+      TumblrApi.reblog(ENV['email'], ENV['password'], ENV['tumblr_name'], post.id, reblog_key)
+      post.update(:posted => true)
+      Tumblr.filter(:id => post.tumblr_id).update(:last_reblogged_post => DateTime.now)
+    end
+  end
+
 end
