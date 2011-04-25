@@ -61,4 +61,11 @@ class TumblrApi
     Net::HTTP.post_form(URI.parse("http://www.tumblr.com/api/reblog"), params)
   end
 
+  def self.tag_to_link tag, link_text = nil
+    unless link_text
+      link_text = tag
+    end
+    "<a  target='_blank' href='http://www.tumblr.com/tagged/#{tag.sub(' ', '+')}'>#{link_text}</a>"
+  end
+
 end

@@ -64,7 +64,7 @@
           <td><%= post.score %></td>
           <td><%= "<a  target='_blank' href='#{post.tumblr.url}'>#{post.tumblr.name}</a>" %></td>
           <td><%= "<a target='_blank'href='#{post.tumblr.url}/post/#{post.id}'>View</a>" %></td>
-          <td><%= post.tags.collect { |t| "<a target='_blank' href='http://www.tumblr.com/tagged/#{t.name.sub(' ', '+')}'>#{t.name}#{t.value ? "(#{t.value})" : ''}</a>" }.join(', ') %></td>
+          <td><%= post.tags.collect { |t| TumblrApi.tag_to_link(t.name, ("#{t.name}#{t.value ? "(#{t.value})" : ''}"))}.join(', ') %></td>
         </tr>
     <% end %>
     </tbody>
@@ -81,18 +81,16 @@
       <th>Fetch</th>
       <th>Last Fetch Date</th>
       <th>Posts</th>
-      <th>View</th>
     </tr>
     </thead>
     <tbody>
     <% @tags.each do |tag| %>
         <tr>
-          <td><%= tag[:n] %></td>
+          <td><%= TumblrApi.tag_to_link(tag[:n])%></td>
           <td><%= tag[:v] %></td>
           <td><%= tag[:f] ? 'true' : 'false' %></td>
           <td><%= display_date_time(tag[:f] ? tag[:l] : nil) %></td>
           <td><%= tag[:c] %></td>
-          <td><%= "<a  target='_blank' href='http://www.tumblr.com/tagged/#{tag[:n].sub(' ', '+')}'>View</a>" %></td>
         </tr>
     <% end %>
     </tbody>
