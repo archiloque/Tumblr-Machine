@@ -7,8 +7,8 @@
   <script src="/jquery.js" type="text/javascript"></script>
   <script src="/jquery.tablesorter.js" type="text/javascript"></script>
   <script src="/tumblr-machine.js" type="text/javascript"></script>
-  <link rel="shortcut icon" href="/favicon.ico" />
-  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="shortcut icon" href="/favicon.ico"/>
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
 </head>
 <body>
 
@@ -98,6 +98,20 @@
     <% end %>
     </tbody>
   </table>
+
+  <h2>Actions</h2>
+
+  <div id="actions">
+    <form onsubmit="clean(); return false;">
+      <input type="submit" value="Clean"/>
+    </form>
+    <form onsubmit="fetchNextTags(); return false;">
+      <input type="submit" value="Fetch next tags"/>
+    </form>
+    <form onsubmit="reblogNext(); return false;">
+      <input type="submit" value="Reblog next post"/>
+    </form>
+  </div>
 
 </div>
 <div id="right">

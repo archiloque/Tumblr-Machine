@@ -14,18 +14,34 @@ $(document).ready(function() {
     });
 });
 
+function clean() {
+    callAndDisplayResult('/clean');
+}
+
+function fetchNextTags() {
+    callAndDisplayResult('/fetch_next_tags');
+}
+
 function fetch(tag) {
-    $.get('/fetch/' + tag, function(data) {
-        displayMessage(data);
-    });
+    callAndDisplayResult('/fetch/' + tag);
 }
 
 function reblog(id) {
     if (confirm("Are you sure you want to reblog this post ?")) {
-        $.get('/reblog/' + id, function(data) {
-            displayMessage(data);
-        });
+        callAndDisplayResult('/reblog/' + id);
     }
+}
+
+function reblogNext() {
+    if (confirm("Are you sure you want to reblog the next post ?")) {
+        callAndDisplayResult('/reblog_next');
+    }
+}
+
+function callAndDisplayResult(url) {
+    $.get(url, function(data) {
+        displayMessage(data);
+    });
 }
 
 function displayMessage(message) {

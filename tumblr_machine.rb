@@ -130,7 +130,7 @@ class TumblrMachine< Sinatra::Base
       tags_names << t.name
     end
     posts_count = fetch_tags tags_names, cache
-    "Fetched #{tags_names.join(', ')}, #{posts_count} posts added"
+    "Fetched #{tags_names.join(', ')}: #{posts_count} posts added"
   end
 
   # reblog the next post
@@ -160,6 +160,7 @@ class TumblrMachine< Sinatra::Base
     Post.filter('fetched < ?', (DateTime.now - 15)).destroy
     Tumblr.filter('id not in (select distinct(tumblr_id) from posts)').filter('last_reblogged_post < ?', (DateTime.now << 1)).delete
     Tag.filter(:fetch => false, :value => nil).filter('id not in (select distinct(tag_id) from posts_tags)').delete
+    "Cleaning done"
   end
 
   # recalculate score of existing posts

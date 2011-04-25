@@ -12,6 +12,7 @@ body {
     top: 80px;
     left: 0;
     width: 70%;
+    padding-left: 5px;
 }
 #left table {
     margin-right: 10px;
@@ -34,7 +35,6 @@ body {
 }
 
 h2 {
-    padding-left: 5px;
     margin-bottom: 5px;
 }
 
@@ -76,7 +76,6 @@ h2 {
 table {
     border: 1px solid #888888;
     border-collapse: collapse;
-    margin-left: 5px;
 }
 
 tr {
@@ -113,4 +112,8 @@ a:hover {
 }
 .actionTd {
     min-width: 40px;
+}
+
+#actions form {
+    display: inline;
 }
