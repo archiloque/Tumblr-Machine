@@ -9,89 +9,95 @@
   <script src="/tumblr-machine.js" type="text/javascript"></script>
 </head>
 <body>
-<h1>Tumblr Machine</h1>
 
-<div id="messages">
-  <% if flash[:error] %>
-      <div id="error" class="flash"><%= flash[:error] %></div>
-  <% end %>
+<h1 id="title">Tumblr Machine</h1>
 
-  <% if flash[:warning] %>
-      <div id="warning" class="flash"><%= flash[:warning] %></div>
-  <% end %>
+<div id="left">
 
-  <% if flash[:notice] %>
-      <div id="notice" class="flash"><%= flash[:notice] %></div>
-  <% end %>
+  <div id="messages">
+    <% if flash[:error] %>
+        <div id="error" class="flash"><%= flash[:error] %></div>
+    <% end %>
+
+    <% if flash[:warning] %>
+        <div id="warning" class="flash"><%= flash[:warning] %></div>
+    <% end %>
+
+    <% if flash[:notice] %>
+        <div id="notice" class="flash"><%= flash[:notice] %></div>
+    <% end %>
+  </div>
+
+
+  <h2>Add / Edit tag</h2>
+
+  <form action="/add_tag" method="post">
+    <ul class="inputElement">
+      <li>
+        <label>Name <input type="text" name="tagName"></label>
+      </li>
+      <li>
+        <label>Value <input type="number" name="tagValue"></label>
+      </li>
+      <li>
+        <label>Fetch <input type="checkbox" name="tagFetch" checked="checked"></label>
+      </li>
+      <li>
+        <input name="add_tag" type="submit" value="Submit"/>
+      </li>
+    </ul>
+  </form>
+
+  <h2>Next posts</h2>
+  <table id="tagsPosts">
+    <thead>
+    <tr>
+      <th>Score</th>
+      <th>Tumblr</th>
+      <th>View</th>
+      <th>Tags</th>
+    </tr>
+    </thead>
+    <tbody>
+    <% @posts.each do |post| %>
+        <tr>
+          <td><%= post.score %></td>
+          <td><%= "<a  target='_blank' href='#{post.tumblr.url}'>#{post.tumblr.name}</a>" %></td>
+          <td><%= "<a target='_blank'href='#{post.tumblr.url}/post/#{post.id}'>View</a>" %></td>
+          <td><%= post.tags.collect { |t| "<a target='_blank' href='http://www.tumblr.com/tagged/#{t.name.sub(' ', '+')}'>#{t.name}#{t.value ? "(#{t.value})" : ''}</a>" }.join(', ') %></td>
+        </tr>
+    <% end %>
+    </tbody>
+  </table>
+
 </div>
-
-
-<h2>Add / Edit tag</h2>
-
-<form action="/add_tag" method="post">
-  <ul class="inputElement">
-    <li>
-      <label>Name <input type="text" name="tagName"></label>
-    </li>
-    <li>
-      <label>Value <input type="number" name="tagValue"></label>
-    </li>
-    <li>
-      <label>Fetch <input type="checkbox" name="tagFetch"checked="checked" ></label>
-    </li>
-    <li>
-      <input name="add_tag" type="submit" value="Submit"/>
-    </li>
-  </ul>
-</form>
-<h2>Existing tags</h2>
-<table id="tagsTable">
-  <thead>
-  <tr>
-    <th>Name</th>
-    <th>Value</th>
-    <th>Fetch</th>
-    <th>Last Fetch Date</th>
-    <th>Posts</th>
-    <th>View</th>
-  </tr>
-  </thead>
-  <tbody>
-  <% @tags.each do |tag| %>
-      <tr>
-        <td><%= tag[:n] %></td>
-        <td><%= tag[:v] %></td>
-        <td><%= tag[:f] ? 'true' : 'false' %></td>
-        <td><%= display_date_time(tag[:f] ? tag[:l] : nil) %></td>
-        <td><%= tag[:c] %></td>
-        <td><%= "<a  target='_blank' href='http://www.tumblr.com/tagged/#{tag[:n].sub(' ', '+')}'>View</a>" %></td>
-      </tr>
-  <% end %>
-  </tbody>
-</table>
-
-<h2>Next posts</h2>
-<table id="tagsPosts">
-  <thead>
-  <tr>
-    <th>Score</th>
-    <th>Tumblr</th>
-    <th>View</th>
-    <th>Tags</th>
-  </tr>
-  </thead>
-  <tbody>
-  <% @posts.each do |post| %>
-      <tr>
-        <td><%= post.score %></td>
-        <td><%= "<a  target='_blank' href='#{post.tumblr.url}'>#{post.tumblr.name}</a>" %></td>
-        <td><%= "<a target='_blank'href='#{post.tumblr.url}/post/#{post.id}'>View</a>" %></td>
-        <td><%= post.tags.collect{|t| "<a target='_blank' href='http://www.tumblr.com/tagged/#{t.name.sub(' ', '+')}'>#{t.name}#{t.value ? "(#{t.value})" : ''}</a>"}.join(', ') %></td>
-      </tr>
-  <% end %>
-  </tbody>
-</table>
-<br>
+<div id="right">
+  <h2>Existing tags</h2>
+  <table id="tagsTable">
+    <thead>
+    <tr>
+      <th>Name</th>
+      <th>Value</th>
+      <th>Fetch</th>
+      <th>Last Fetch Date</th>
+      <th>Posts</th>
+      <th>View</th>
+    </tr>
+    </thead>
+    <tbody>
+    <% @tags.each do |tag| %>
+        <tr>
+          <td><%= tag[:n] %></td>
+          <td><%= tag[:v] %></td>
+          <td><%= tag[:f] ? 'true' : 'false' %></td>
+          <td><%= display_date_time(tag[:f] ? tag[:l] : nil) %></td>
+          <td><%= tag[:c] %></td>
+          <td><%= "<a  target='_blank' href='http://www.tumblr.com/tagged/#{tag[:n].sub(' ', '+')}'>View</a>" %></td>
+        </tr>
+    <% end %>
+    </tbody>
+  </table>
+</div>
 </body>
 </html>
 

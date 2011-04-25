@@ -7,10 +7,26 @@ body {
     padding: 0;
 }
 
-h1 {
+#left {
+    position: absolute;
+    top: 80px;
+    left: 0;
+    width: 50%;
+}
+#right {
+    position: absolute;
+    top: 80px;
+    right: 0;
+    width: 50%;
+}
+
+#title {
+    position: absolute;
+    top: 0;
     font-weight: bold;
     font-size: 36px;
     text-align: center;
+    width: 100%;
 }
 
 h2 {
@@ -78,6 +94,7 @@ a {
     color: #111111;
     text-decoration: none;
 }
+
 a:hover {
     text-decoration: underline;
 }
