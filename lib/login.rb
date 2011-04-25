@@ -9,8 +9,8 @@ class TumblrMachine
       else
         halt 404, "Error: #{resp.status}"
       end
-    elsif ENV['OPENID_URI']
-      openid_params = {:identifier => ENV['OPENID_URI']}
+    elsif ENV['openid_uri']
+      openid_params = {:identifier => ENV['openid_uri']}
       if params[:return_to]
         openid_params[:return_to] = params[:return_to]
       end
@@ -24,7 +24,7 @@ class TumblrMachine
   private
 
   def check_logged
-    if (!ENV['OPENID_URI']) || @user_logged
+    if (!ENV['openid_uri']) || @user_logged
     elsif resp = request.env['rack.openid.response']
       if resp.status == :success
         session[:user] = resp
@@ -38,7 +38,7 @@ class TumblrMachine
   end
 
   def check_logged_ajax
-    unless (!ENV['OPENID_URI']) || @user_logged
+    unless (!ENV['openid_uri']) || @user_logged
       body 'Logged users only'
       halt
     end
