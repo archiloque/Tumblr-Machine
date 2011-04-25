@@ -93,7 +93,7 @@
           </td>
           <td class="r"><%= post.score %></td>
           <td><%= "<a title='Go to blog' target='_blank' href='#{post.tumblr.url}'>#{post.tumblr.name}</a>" %></td>
-          <td><%= post.tags.collect { |t| TumblrApi.tag_to_link(t.name, ("#{t.name}#{t.value ? "(#{t.value})" : ''}")) }.join(', ') %></td>
+          <td><%= post.tags.collect { |t| TumblrApi.tag_to_link(t.name, ("#{t.name}#{(t.value != 0) ? "(#{t.value})" : ''}")) }.join(', ') %></td>
         </tr>
     <% end %>
     </tbody>

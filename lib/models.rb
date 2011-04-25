@@ -38,6 +38,17 @@ migration 'larger columns for posts ids' do
   end
 end
 
+migration 'no null tags score' do
+  database.run 'update tags set value = 0 where value is null'
+  database.alter_table :tags do
+     set_column_allow_null :value, false
+  end
+  database.run 'update posts set score = 0 where score is null'
+  database.alter_table :posts do
+    set_column_allow_null :score, false
+  end
+end
+
 #models
 class Tag < Sequel::Model
   many_to_many :posts
