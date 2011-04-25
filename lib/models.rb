@@ -29,6 +29,15 @@ migration 'create tables' do
   end
 end
 
+migration 'larger columns for posts ids' do
+  database.alter_table :posts do
+     set_column_type :id, Bignum
+  end
+  database.alter_table :posts_tags do
+     set_column_type :post_id, Bignum
+  end
+end
+
 #models
 class Tag < Sequel::Model
   many_to_many :posts
