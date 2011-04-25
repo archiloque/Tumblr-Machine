@@ -88,7 +88,7 @@ class TumblrMachine< Sinatra::Base
         tag.update(updates)
 
         if tag.fetch
-          fetch_tag(tag)
+          fetch_tag tag.name, tag
         end
 
         if delta != 0
@@ -111,7 +111,7 @@ class TumblrMachine< Sinatra::Base
   get '/fetch/:tag' do
     tag = Tag.filter(:name => params[:tag]).first
     posts_count = fetch_tag(tag.name, tag)
-    "Fetched [#{params[:tag]}], #{posts_count} posts added\n"
+    "Fetched [#{params[:tag]}], #{posts_count} posts added"
   end
 
   # fetch content of next tag
@@ -119,9 +119,9 @@ class TumblrMachine< Sinatra::Base
     tag = Tag.filter(:fetch => true).order(:last_fetch.asc).first
     if tag
       posts_count = fetch_tag(tag.name, tag)
-      "Fetched [#{tag.name}], #{posts_count} posts added\n"
+      "Fetched [#{tag.name}], #{posts_count} posts added"
     else
-      "Nothing to fetch\n"
+      "Nothing to fetch"
     end
   end
 
@@ -130,9 +130,9 @@ class TumblrMachine< Sinatra::Base
     post = Post.eager(:tumblr).eager(:tags).filter(:posted => false).filter(:tumblr_id => Tumblr.select(:id).filter('tumblrs.last_reblogged_post is null or tumblrs.last_reblogged_post > ?', (DateTime.now << 1))).order(:score.desc).first
     if post
       reblog post
-      "Posted #{post.tumblr.url}/post/#{post.id}\n"
+      "Posted #{post.tumblr.url}/post/#{post.id}"
     else
-      "Nothing to post\n"
+      "Nothing to post"
     end
   end
 
@@ -141,7 +141,7 @@ class TumblrMachine< Sinatra::Base
     post = Post.eager(:tumblr).eager(:tags).filter(:id => params[:id]).first
     if post
       reblog post
-      "Posted #{post.tumblr.url}/post/#{post.id}\n"
+      "Posted #{post.tumblr.url}/post/#{post.id}"
     else
       "Post not found"
     end
@@ -152,6 +152,12 @@ class TumblrMachine< Sinatra::Base
     Post.filter('fetched < ?', (DateTime.now - 15)).destroy
     Tumblr.filter('id not in (select distinct(tumblr_id) from posts)').filter('last_reblogged_post < ?', (DateTime.now << 1)).delete
     Tag.filter(:fetch => false, :value => nil).filter('id not in (select distinct(tag_id) from posts_tags)').delete
+  end
+
+  # recalculate score of existing posts
+  get '/recalculate_scores' do
+    database.run "update posts set score = (select sum(tags.value) from tags where tags.id in (select posts_tags.tag_id from posts_tags where posts_tags.post_id = posts.id) and value is not null)"
+    "OK"
   end
 
   private
