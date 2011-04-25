@@ -99,6 +99,8 @@ a {
     text-decoration: none;
 }
 
-a:hover {
+.clickable:hover, a:hover {
     text-decoration: underline;
+    cursor: pointer;
 }
+

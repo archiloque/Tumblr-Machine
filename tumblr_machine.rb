@@ -107,11 +107,18 @@ class TumblrMachine< Sinatra::Base
     end
   end
 
+  # Fetch this tag
+  get '/fetch/:tag' do
+    tag = Tag.filter(:name => params[:tag]).first
+    posts_count = fetch_tag(tag.name, tag)
+    "Fetched [#{params[:tag]}], #{posts_count} posts added\n"
+  end
+
   # fetch content of next tag
   get '/fetch_next_tag' do
     tag = Tag.filter(:fetch => true).order(:last_fetch.asc).first
     if tag
-      posts_count = fetch_tag(tag)
+      posts_count = fetch_tag(tag.name, tag)
       "Fetched [#{tag.name}], #{posts_count} posts added\n"
     else
       "Nothing to fetch\n"
@@ -141,10 +148,16 @@ class TumblrMachine< Sinatra::Base
 
   private
 
-  def fetch_tag(tag)
+  # Fetch a tag.
+  # Parameters:
+  # - tag_name the tag name
+  # - tag the tag, may be null
+  def fetch_tag tag_name, tag = nil
     posts_count = 0
+
+    # Small cache to avoid fetching same tags for each post
     fetched_tags = {}
-    TumblrApi.fetch_tag(tag.name).each do |post|
+    TumblrApi.fetch_tag(tag_name).each do |post|
       unless (Post.first(:id => post[:id])) || (post[:tumblr_name] == ENV['tumblr_name'])
         posts_count += 1
         post_db = Post.new
@@ -156,8 +169,11 @@ class TumblrMachine< Sinatra::Base
         post_db.fetched = DateTime.now
         post_db.save
 
-        score = tag.value || 0
-        post_db.add_tag tag
+        score = 0
+        if tag
+          score += tag.value || 0
+          post_db.add_tag tag
+        end
 
         post[:tags].each do |t|
           if ta = fetched_tags[t] || Tag.first(:name => t)
@@ -173,7 +189,9 @@ class TumblrMachine< Sinatra::Base
         post_db.update({:score => score})
       end
     end
-    tag.update(:last_fetch => DateTime.now)
+    if tag
+      tag.update(:last_fetch => DateTime.now)
+    end
     posts_count
   end
 

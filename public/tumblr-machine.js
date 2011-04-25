@@ -6,5 +6,21 @@ $(document).ready(function() {
         $('input[name=tagValue]').val($(children[1]).html());
         $('input[name=tagFetch]').attr('checked', $(children[2]).html() == 'true');
     });
-    }
-);
+}
+        );
+
+function fetch(tag) {
+    $.get('/fetch/' + tag, function(data) {
+        var displayResult = function() {
+            $('#messages').append('<div id="notice" class="flash">' + data + '</div>');
+        };
+        if ($('.flash').length == 0) {
+            displayResult();
+        } else {
+            $('.flash').fadeOut(function() {
+                $('.flash').remove();
+                displayResult();
+            });
+        }
+    });
+}
