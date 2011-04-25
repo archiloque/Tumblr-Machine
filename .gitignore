@@ -1,4 +1,4 @@
 .DS_Store
 .idea
 Gemfile.lock
-tumblr_machine.sqlite3
+tumblr-machine.sqlite3
