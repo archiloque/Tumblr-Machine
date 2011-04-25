@@ -2,30 +2,42 @@ require 'nokogiri'
 require 'open-uri'
 require 'net/http'
 require 'uri'
+require 'typhoeus'
 
 # Api to communicate with Tumblr
 class TumblrApi
 
-  # Fetch the last images posts for a tag
+  # Fetch the last images posts for a list of tags
   # Returns an array describing the posts
-  # Note: the returned posts' tags don't include the requested tag and the found tags are normalized (lower case and uniq)
-  def self.fetch_tag tag_name
-    url = "http://www.tumblr.com/tagged/#{tag_name.sub(' ', '+')}"
-    doc = Nokogiri::HTML(open(url))
-    doc.search('#posts > .photo').collect do |item|
-      post = {}
+  # Note: the the found tags are normalized (lower case and uniq)
+  def self.fetch_tags tags_names
+    posts = []
+    hydra = Typhoeus::Hydra.new
+    hydra.disable_memoization
+    tags_names.each do |tag_name|
+      url = "http://www.tumblr.com/tagged/#{tag_name.sub(' ', '+')}"
+      request = Typhoeus::Request.new url
+      request.on_complete do |response|
+        if response.code == 200
+          doc = Nokogiri::HTML(response.body)
+          doc.search('#posts > .photo').each do |item|
+            post = {}
+            post_id = item[:id]
+            post[:id] = post_id[(post_id.rindex('_') +1) .. -1].to_i
 
-      post_id = item[:id]
-      post[:id] = post_id[(post_id.rindex('_') +1) .. -1].to_i
+            post_info = item.search('.post_info a')[0]
+            post[:tumblr_name] = post_info.content
+            post[:tumblr_url] = post_info[:href]
 
-      post_info = item.search('.post_info a')[0]
-      post[:tumblr_name] = post_info.content
-      post[:tumblr_url] = post_info[:href]
-
-      post[:tags] = item.search('.tags a').collect { |tag| tag.content[1..-1].downcase }.uniq
-
-      post
+            post[:tags] = [tag_name].concat(item.search('.tags a').collect { |tag| tag.content[1..-1].downcase }.uniq)
+            posts << post
+          end
+        end
+      end
+      hydra.queue request
     end
+    hydra.run
+    posts
   end
 
   # Get the reblog key of a post to be able to reblog it
