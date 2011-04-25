@@ -17,7 +17,7 @@ require_relative 'lib/tumblr_api'
 
 ENV['DATABASE_URL'] ||= "sqlite://#{Dir.pwd}/tumblr_machine.sqlite3"
 
-['email', 'password', 'tumblr_name'].each do |p|
+['email', 'password', 'tumblr_name', 'OPENID_URI'].each do |p|
   unless ENV.include? p
     raise "Missing #{p} environment variable"
   end
@@ -47,10 +47,19 @@ class TumblrMachine< Sinatra::Base
   require_relative 'lib/models'
   require_relative 'lib/helpers'
 
+  require 'rack/openid'
+  use Rack::OpenID
+
   helpers Sinatra::TumblrMachineHelper
+
+  before do
+    @user_logged = session[:user]
+  end
 
   # admin
   get '/' do
+    check_logged
+
     @tags1 = database['select tags.name n, tags.fetch f, tags.last_fetch l, tags.value v, count(posts_tags.post_id) c ' +
                           'from tags left join posts_tags on tags.id = posts_tags.tag_id ' +
                           'where tags.value is not null ' +
@@ -66,6 +75,8 @@ class TumblrMachine< Sinatra::Base
   end
 
   post '/edit_tag' do
+    check_logged
+
     name = params[:tagName]
     value = params[:tagValue]
     if name.blank?
@@ -115,13 +126,17 @@ class TumblrMachine< Sinatra::Base
 
   # Fetch this tag
   get '/fetch/:tag' do
+    check_logged_ajax
+
     tag = Tag.filter(:name => params[:tag]).first
     posts_count = fetch_tags([tag.name], {tag.name => tag})
     "Fetched [#{params[:tag]}], #{posts_count} posts added"
   end
 
-  # fetch content of next tag
+  # fetch content of next tags
   get '/fetch_next_tags' do
+    check_logged_ajax
+
     tags = Tag.filter(:fetch => true).order(:last_fetch.asc).limit(10)
     cache = {}
     tags_names = []
@@ -135,6 +150,8 @@ class TumblrMachine< Sinatra::Base
 
   # reblog the next post
   get '/reblog_next' do
+    check_logged_ajax
+
     post = next_posts().first
     if post
       reblog post
@@ -146,6 +163,8 @@ class TumblrMachine< Sinatra::Base
 
   # Reblog a post
   get '/reblog/:id' do
+    check_logged_ajax
+
     post = Post.eager(:tumblr).eager(:tags).filter(:id => params[:id]).first
     if post
       reblog post
@@ -157,6 +176,8 @@ class TumblrMachine< Sinatra::Base
 
   # clean old posts
   get '/clean' do
+    check_logged_ajax
+
     Post.filter('fetched < ?', (DateTime.now - 15)).destroy
     Tumblr.filter('id not in (select distinct(tumblr_id) from posts)').filter('last_reblogged_post < ?', (DateTime.now << 1)).delete
     Tag.filter(:fetch => false, :value => nil).filter('id not in (select distinct(tag_id) from posts_tags)').delete
@@ -165,6 +186,8 @@ class TumblrMachine< Sinatra::Base
 
   # recalculate score of existing posts
   get '/recalculate_scores' do
+    check_logged_ajax
+
     database.run "update posts set score = (select sum(tags.value) from tags where tags.id in (select posts_tags.tag_id from posts_tags where posts_tags.post_id = posts.id) and value is not null)"
     "OK"
   end
@@ -225,3 +248,5 @@ class TumblrMachine< Sinatra::Base
   end
 
 end
+
+require_relative 'lib/login'
