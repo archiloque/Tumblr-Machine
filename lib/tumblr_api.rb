@@ -65,7 +65,7 @@ class TumblrApi
     unless link_text
       link_text = tag
     end
-    "<a  target='_blank' href='http://www.tumblr.com/tagged/#{tag.sub(' ', '+')}'>#{link_text}</a>"
+    "<a title='View the tag' target='_blank' href='http://www.tumblr.com/tagged/#{tag.sub(' ', '+')}'>#{link_text}</a>"
   end
 
 end

@@ -99,8 +99,11 @@ a {
     text-decoration: none;
 }
 
-.clickable:hover, a:hover {
+a:hover {
     text-decoration: underline;
     cursor: pointer;
 }
 
+.b {
+    font-size: 18px;
+}

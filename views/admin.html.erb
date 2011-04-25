@@ -50,18 +50,21 @@
   <table id="tagsPosts">
     <thead>
     <tr>
+      <th>Actions</th>
       <th>Score</th>
       <th>Tumblr</th>
-      <th>View</th>
       <th>Tags</th>
     </tr>
     </thead>
     <tbody>
     <% @posts.each do |post| %>
         <tr>
+          <td>
+            <%= "<a class='b' target='_blank'href='#{post.tumblr.url}/post/#{post.id}' title='View Post'>☞</a>" %>
+            <%= "<a class='b' onclick='reblog(#{post.id}); return false;' title='Reblog'>♲</a>" %>
+          </td>
           <td><%= post.score %></td>
-          <td><%= "<a  target='_blank' href='#{post.tumblr.url}'>#{post.tumblr.name}</a>" %></td>
-          <td><%= "<a target='_blank'href='#{post.tumblr.url}/post/#{post.id}'>View</a>" %></td>
+          <td><%= "<a title='Go to blog' target='_blank' href='#{post.tumblr.url}'>#{post.tumblr.name}</a>" %></td>
           <td><%= post.tags.collect { |t| TumblrApi.tag_to_link(t.name, ("#{t.name}#{t.value ? "(#{t.value})" : ''}")) }.join(', ') %></td>
         </tr>
     <% end %>
@@ -86,7 +89,7 @@
         <tr>
           <td><%= TumblrApi.tag_to_link(tag[:n]) %></td>
           <td><%= tag[:v] %></td>
-          <td><%= "<span class='clickable' onclick='fetch(\"#{tag[:n]}\");'>#{tag[:f] ? 'true' : 'false'}</span>" %></td>
+          <td><%= "<a title='Fetch this tag' onclick='fetch(\"#{tag[:n]}\"); return false;'>#{tag[:f] ? 'true' : 'false'}</a>" %></td>
           <td><%= display_date_time(tag[:f] ? tag[:l] : nil) %></td>
           <td><%= tag[:c] %></td>
         </tr>

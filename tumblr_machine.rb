@@ -125,17 +125,25 @@ class TumblrMachine< Sinatra::Base
     end
   end
 
-  # reblog
+  # reblog the next post
   get '/reblog_next' do
     post = Post.eager(:tumblr).eager(:tags).filter(:posted => false).filter(:tumblr_id => Tumblr.select(:id).filter('tumblrs.last_reblogged_post is null or tumblrs.last_reblogged_post > ?', (DateTime.now << 1))).order(:score.desc).first
     if post
-      reblog_key = TumblrApi.reblog_key(post.tumblr.url, post.id)
-      TumblrApi.reblog(ENV['email'], ENV['password'], ENV['tumblr_name'], post.id, reblog_key, post.tags.collect { |t| t.name })
-      post.update(:posted => true)
-      Tumblr.filter(:id => post.tumblr_id).update(:last_reblogged_post => DateTime.now)
+      reblog post
       "Posted #{post.tumblr.url}/post/#{post.id}\n"
     else
       "Nothing to post\n"
+    end
+  end
+
+  # Reblog a post
+  get '/reblog/:id' do
+    post = Post.eager(:tumblr).eager(:tags).filter(:id => params[:id]).first
+    if post
+      reblog post
+      "Posted #{post.tumblr.url}/post/#{post.id}\n"
+    else
+      "Post not found"
     end
   end
 
@@ -193,6 +201,14 @@ class TumblrMachine< Sinatra::Base
       tag.update(:last_fetch => DateTime.now)
     end
     posts_count
+  end
+
+  # Reblog a post
+  def reblog post
+    reblog_key = TumblrApi.reblog_key(post.tumblr.url, post.id)
+    TumblrApi.reblog(ENV['email'], ENV['password'], ENV['tumblr_name'], post.id, reblog_key, post.tags.collect { |t| t.name })
+    post.update(:posted => true)
+    Tumblr.filter(:id => post.tumblr_id).update(:last_reblogged_post => DateTime.now)
   end
 
 end
