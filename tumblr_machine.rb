@@ -60,12 +60,12 @@ class TumblrMachine< Sinatra::Base
   get '/' do
     check_logged
 
-    @tags1 = database['select tags.name n, tags.fetch f, tags.last_fetch l, tags.value v, count(posts_tags.post_id) c ' +
+    @tags1 = database['select tags.name as n, tags.fetch as f, tags.last_fetch as l, tags.value as v, count(posts_tags.post_id) as c ' +
                           'from tags left join posts_tags on tags.id = posts_tags.tag_id ' +
                           'where tags.value is not null ' +
                           'group by tags.name, tags.fetch, tags.last_fetch, tags.value ' +
                           'order by tags.fetch desc, tags.value desc, c desc, tags.name asc']
-    @tags2 = database['select tags.name n, count(posts_tags.post_id) c ' +
+    @tags2 = database['select tags.name as n, count(posts_tags.post_id) as c ' +
                           'from tags left join posts_tags on tags.id = posts_tags.tag_id ' +
                           'where tags.value is null ' +
                           'group by tags.name ' +
