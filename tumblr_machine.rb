@@ -1,3 +1,9 @@
+['email', 'password', 'tumblr_name', 'openid_uri'].each do |p|
+  unless ENV.include? p
+    raise "Missing #{p} environment variable"
+  end
+end
+
 require 'rubygems'
 require 'bundler'
 Bundler.setup
@@ -16,12 +22,6 @@ require 'erb'
 require_relative 'lib/tumblr_api'
 
 ENV['DATABASE_URL'] ||= "sqlite://#{Dir.pwd}/tumblr_machine.sqlite3"
-
-['email', 'password', 'tumblr_name', 'OPENID_URI'].each do |p|
-  unless ENV.include? p
-    raise "Missing #{p} environment variable"
-  end
-end
 
 class TumblrMachine< Sinatra::Base
 
