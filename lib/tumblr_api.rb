@@ -21,7 +21,9 @@ class TumblrApi
       post_info = item.search('.post_info a')[0]
       post[:tumblr_name] = post_info.content
       post[:tumblr_url] = post_info[:href]
+
       post[:tags] = item.search('.tags a').collect { |tag| tag.content[1..-1].downcase }.uniq
+
       post
     end
   end
