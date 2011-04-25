@@ -108,6 +108,9 @@ a:hover {
     font-size: 18px;
 }
 
+.r {
+    text-align: right;
+}
 .actionTd {
     min-width: 40px;
 }
