@@ -59,7 +59,7 @@ class TumblrMachine< Sinatra::Base
     erb :'admin.html'
   end
 
-  post '/add_tag' do
+  post '/edit_tag' do
     name = params[:tagName]
     value = params[:tagValue]
     if name.blank?
