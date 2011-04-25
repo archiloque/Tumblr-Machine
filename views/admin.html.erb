@@ -52,6 +52,7 @@
   <table id="tagsTable1" class="tagsTable">
     <thead>
     <tr>
+      <th class="actionTd"></th>
       <th>Name</th>
       <th>Value</th>
       <th>Fetch</th>
@@ -62,9 +63,10 @@
     <tbody>
     <% @tags1.each do |tag| %>
         <tr>
+          <td><%= "<a title='Fetch this tag' onclick='fetch(\"#{tag[:n]}\"); return false;'>⌘</a>" %></td>
           <td><%= TumblrApi.tag_to_link(tag[:n]) %></td>
           <td><%= tag[:v] %></td>
-          <td><%= "<a title='Fetch this tag' onclick='fetch(\"#{tag[:n]}\"); return false;'>#{tag[:f] ? 'true' : 'false'}</a>" %></td>
+          <td><%= tag[:f] ? 'true' : 'false' %></td>
           <td><%= display_date_time(tag[:f] ? tag[:l] : nil) %></td>
           <td><%= tag[:c] %></td>
         </tr>
@@ -76,7 +78,7 @@
   <table id="tagsPosts">
     <thead>
     <tr>
-      <th>Actions</th>
+      <th class="actionTd"></th>
       <th>Score</th>
       <th>Tumblr</th>
       <th>Tags</th>
@@ -87,7 +89,7 @@
         <tr>
           <td>
             <%= "<a class='b' target='_blank'href='#{post.tumblr.url}/post/#{post.id}' title='View Post'>☞</a>" %>
-            <%= "<a class='b' onclick='reblog(#{post.id}); return false;' title='Reblog'>⌘</a>" %>
+            <%= "<a class='b' onclick='reblog(#{post.id}); return false;' title='Reblog'>♻</a>" %>
           </td>
           <td><%= post.score %></td>
           <td><%= "<a title='Go to blog' target='_blank' href='#{post.tumblr.url}'>#{post.tumblr.name}</a>" %></td>
@@ -103,7 +105,7 @@
   <table id="tagsTable2" class="tagsTable">
     <thead>
     <tr>
-      <th>Action</th>
+      <th class="actionTd"></th>
       <th>Name</th>
       <th>Posts</th>
     </tr>

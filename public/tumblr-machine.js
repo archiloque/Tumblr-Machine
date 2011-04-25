@@ -2,9 +2,9 @@ $(document).ready(function() {
     $(".tagsTable").tablesorter();
     $("#tagsTable1 tr").click(function(e) {
         var children = $(e.currentTarget).children();
-        $('input[name=tagName]').val($(children[0]).children()[0].text);
-        $('input[name=tagValue]').val($(children[1]).html());
-        $('input[name=tagFetch]').attr('checked', $($(children[2]).children()[0]).text() == 'true');
+        $('input[name=tagName]').val($(children[1]).children()[0].text);
+        $('input[name=tagValue]').val($(children[2]).html());
+        $('input[name=tagFetch]').attr('checked', $(children[3]).text() == 'true');
     });
     $("#tagsTable2 tr").click(function(e) {
         var children = $(e.currentTarget).children();
