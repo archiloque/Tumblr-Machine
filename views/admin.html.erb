@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <title>Tumblr machine admin</title>
+  <title>⌘ Tumblr machine admin</title>
   <meta charset="utf-8">
   <link href="/tumblr-machine.css" rel="stylesheet" type="text/css"/>
   <script src="/jquery.js" type="text/javascript"></script>
   <script src="/jquery.tablesorter.js" type="text/javascript"></script>
   <script src="/tumblr-machine.js" type="text/javascript"></script>
+  <link rel="shortcut icon" href="/favicon.ico" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 </head>
 <body>
 
@@ -61,7 +63,7 @@
         <tr>
           <td>
             <%= "<a class='b' target='_blank'href='#{post.tumblr.url}/post/#{post.id}' title='View Post'>☞</a>" %>
-            <%= "<a class='b' onclick='reblog(#{post.id}); return false;' title='Reblog'>♲</a>" %>
+            <%= "<a class='b' onclick='reblog(#{post.id}); return false;' title='Reblog'>⌘</a>" %>
           </td>
           <td><%= post.score %></td>
           <td><%= "<a title='Go to blog' target='_blank' href='#{post.tumblr.url}'>#{post.tumblr.name}</a>" %></td>
