@@ -8,7 +8,7 @@ class TumblrApi
 
   # Fetch the last images posts for a tag
   # Returns an array describing the posts
-  # Note: the returned posts' tags don't include the requested tag
+  # Note: the returned posts' tags don't include the requested tag and the found tags are normalized (lower case and uniq)
   def self.fetch_tag tag_name
     url = "http://www.tumblr.com/tagged/#{tag_name.sub(' ', '+')}"
     doc = Nokogiri::HTML(open(url))
