@@ -63,7 +63,7 @@ class TumblrMachine< Sinatra::Base
     @tags1 = database['select tags.name n, tags.fetch f, tags.last_fetch l, tags.value v, count(posts_tags.post_id) c ' +
                           'from tags left join posts_tags on tags.id = posts_tags.tag_id ' +
                           'where tags.value is not null ' +
-                          'group by tags.name ' +
+                          'group by tags.name, tags.fetch, tags.last_fetch, tags.value ' +
                           'order by tags.fetch desc, tags.value desc, c desc, tags.name asc']
     @tags2 = database['select tags.name n, count(posts_tags.post_id) c ' +
                           'from tags left join posts_tags on tags.id = posts_tags.tag_id ' +
