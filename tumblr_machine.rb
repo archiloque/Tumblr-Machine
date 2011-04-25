@@ -51,10 +51,16 @@ class TumblrMachine< Sinatra::Base
 
   # admin
   get '/' do
-    @tags = database['select tags.name n, tags.fetch f, tags.last_fetch l, tags.value v, count(posts_tags.post_id) c ' +
+    @tags1 = database['select tags.name n, tags.fetch f, tags.last_fetch l, tags.value v, count(posts_tags.post_id) c ' +
                          'from tags left join posts_tags on tags.id = posts_tags.tag_id ' +
+                         'where tags.value is not null ' +
                          'group by tags.name ' +
-                         'order by tags.fetch desc, tags.value desc, c desc,  tags.name asc']
+                         'order by tags.fetch desc, tags.value desc, c desc, tags.name asc']
+    @tags2 = database['select tags.name n, count(posts_tags.post_id) c ' +
+                         'from tags left join posts_tags on tags.id = posts_tags.tag_id ' +
+                         'where tags.value is null ' +
+                         'group by tags.name ' +
+                         'order by tags.fetch desc, tags.value desc, c desc, tags.name asc']
     @posts = Post.eager(:tumblr).eager(:tags).filter(:posted => false).filter(:tumblr_id => Tumblr.select(:id).filter('tumblrs.last_reblogged_post is null or tumblrs.last_reblogged_post > ?', (DateTime.now << 1))).order(:score.desc).limit(10)
     erb :'admin.html'
   end

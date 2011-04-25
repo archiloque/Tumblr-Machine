@@ -48,6 +48,30 @@
     </ul>
   </form>
 
+  <h2>Configured tags</h2>
+  <table id="tagsTable1" class="tagsTable">
+    <thead>
+    <tr>
+      <th>Name</th>
+      <th>Value</th>
+      <th>Fetch</th>
+      <th>Last Fetch Date</th>
+      <th>Posts</th>
+    </tr>
+    </thead>
+    <tbody>
+    <% @tags1.each do |tag| %>
+        <tr>
+          <td><%= TumblrApi.tag_to_link(tag[:n]) %></td>
+          <td><%= tag[:v] %></td>
+          <td><%= "<a title='Fetch this tag' onclick='fetch(\"#{tag[:n]}\"); return false;'>#{tag[:f] ? 'true' : 'false'}</a>" %></td>
+          <td><%= display_date_time(tag[:f] ? tag[:l] : nil) %></td>
+          <td><%= tag[:c] %></td>
+        </tr>
+    <% end %>
+    </tbody>
+  </table>
+
   <h2>Next posts</h2>
   <table id="tagsPosts">
     <thead>
@@ -75,24 +99,20 @@
 
 </div>
 <div id="right">
-  <h2>Existing tags</h2>
-  <table id="tagsTable">
+  <h2>Other tags</h2>
+  <table id="tagsTable2" class="tagsTable">
     <thead>
     <tr>
+      <th>Action</th>
       <th>Name</th>
-      <th>Value</th>
-      <th>Fetch</th>
-      <th>Last Fetch Date</th>
       <th>Posts</th>
     </tr>
     </thead>
     <tbody>
-    <% @tags.each do |tag| %>
+    <% @tags2.each do |tag| %>
         <tr>
+          <td><%= "<a title='Fetch this tag' onclick='fetch(\"#{tag[:n]}\"); return false;'>⌘</a>" %></td>
           <td><%= TumblrApi.tag_to_link(tag[:n]) %></td>
-          <td><%= tag[:v] %></td>
-          <td><%= "<a title='Fetch this tag' onclick='fetch(\"#{tag[:n]}\"); return false;'>#{tag[:f] ? 'true' : 'false'}</a>" %></td>
-          <td><%= display_date_time(tag[:f] ? tag[:l] : nil) %></td>
           <td><%= tag[:c] %></td>
         </tr>
     <% end %>
