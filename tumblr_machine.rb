@@ -61,7 +61,7 @@ class TumblrMachine< Sinatra::Base
                           'where tags.value is null ' +
                           'group by tags.name ' +
                           'order by c desc, tags.name asc']
-    @posts = Post.eager(:tumblr).eager(:tags).filter(:posted => false).filter(:tumblr_id => Tumblr.select(:id).filter('tumblrs.last_reblogged_post is null or tumblrs.last_reblogged_post > ?', (DateTime.now << 1))).order(:score.desc).limit(10)
+    @posts = next_posts().limit(10)
     erb :'admin.html'
   end
 
@@ -135,7 +135,7 @@ class TumblrMachine< Sinatra::Base
 
   # reblog the next post
   get '/reblog_next' do
-    post = Post.eager(:tumblr).eager(:tags).filter(:posted => false).filter(:tumblr_id => Tumblr.select(:id).filter('tumblrs.last_reblogged_post is null or tumblrs.last_reblogged_post > ?', (DateTime.now << 1))).order(:score.desc).first
+    post = next_posts().first
     if post
       reblog post
       "Posted #{post.tumblr.url}/post/#{post.id}"
@@ -217,6 +217,11 @@ class TumblrMachine< Sinatra::Base
     TumblrApi.reblog(ENV['email'], ENV['password'], ENV['tumblr_name'], post.id, reblog_key, post.tags.collect { |t| t.name })
     post.update(:posted => true)
     Tumblr.filter(:id => post.tumblr_id).update(:last_reblogged_post => DateTime.now)
+  end
+
+  # Finder for the next posts
+  def next_posts
+    Post.eager(:tumblr).eager(:tags).filter(:posted => false).filter(:tumblr_id => Tumblr.select(:id).filter('tumblrs.last_reblogged_post is null or tumblrs.last_reblogged_post < ?', (DateTime.now << 1))).order(:score.desc)
   end
 
 end
