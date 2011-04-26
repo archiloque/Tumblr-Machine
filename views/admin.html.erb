@@ -78,7 +78,7 @@
   <table id="tagsPosts">
     <thead>
     <tr>
-      <th class="actionTd"></th>
+      <th class="actionTd2"></th>
       <th>Score</th>
       <th>Tumblr</th>
       <th>Tags</th>
@@ -90,6 +90,7 @@
           <td>
             <%= "<a class='b' target='_blank'href='#{post.tumblr.url}/post/#{post.id}' title='View Post'>☞</a>" %>
             <%= "<a class='b' onclick='reblog(#{post.id}); return false;' title='Reblog'>♻</a>" %>
+            <%= "<a class='b' onclick='skip(#{post.id}); return false;' title='Skip'>⊗</a>" %>
           </td>
           <td class="r"><%= post.score %></td>
           <td><%= "<a title='Go to blog' target='_blank' href='#{post.tumblr.url}'>#{post.tumblr.name}</a>" %></td>

@@ -32,6 +32,12 @@ function reblog(id) {
     }
 }
 
+function skip(id) {
+    if (confirm("Are you sure you want to skip this post ?")) {
+        callAndDisplayResult('/skip/' + id);
+    }
+}
+
 function reblogNext() {
     if (confirm("Are you sure you want to reblog the next post ?")) {
         callAndDisplayResult('/reblog_next');

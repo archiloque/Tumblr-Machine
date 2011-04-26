@@ -104,14 +104,18 @@ a:hover {
 }
 
 .b {
-    font-size: 18px;
+    font-size: 14px;
 }
 
 .r {
     text-align: right;
 }
+
 .actionTd {
     min-width: 40px;
+}
+.actionTd2 {
+    min-width: 50px;
 }
 
 #actions form {

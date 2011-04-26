@@ -49,6 +49,12 @@ migration 'no null tags score' do
   end
 end
 
+migration 'skipping posts' do
+  database.alter_table :posts do
+    add_column :skip, :boolean, :null => true, :index => true
+  end
+end
+
 #models
 class Tag < Sequel::Model
   many_to_many :posts

@@ -122,12 +122,20 @@ class TumblrMachine< Sinatra::Base
   end
 
   # Fetch this tag
-  get '/fetch/:tag' do
+  get '/fetch/:tag_name' do
     check_logged_ajax
 
-    tag = Tag.filter(:name => params[:tag]).first
+    tag = Tag.filter(:name => params[:tag_name]).first
     posts_count = fetch_tags([tag.name], {tag.name => tag})
     "Fetched [#{params[:tag]}], #{posts_count} posts added"
+  end
+
+  # Skip this post
+  get '/skip/:post_id' do
+    check_logged_ajax
+
+    Post.filter(:id => params[:post_id]).update({:skip => true})
+    "Post skipped"
   end
 
   # fetch content of next tags
@@ -238,7 +246,7 @@ class TumblrMachine< Sinatra::Base
 
   # Finder for the next posts
   def next_posts
-    Post.eager(:tumblr).eager(:tags).filter(:posted => false).filter(:tumblr_id => Tumblr.select(:id).filter('tumblrs.last_reblogged_post is null or tumblrs.last_reblogged_post < ?', (DateTime.now << 1))).order(:score.desc)
+    Post.eager(:tumblr).eager(:tags).filter(~{:skip => true}).filter(:posted => false).filter(:tumblr_id => Tumblr.select(:id).filter('tumblrs.last_reblogged_post is null or tumblrs.last_reblogged_post < ?', (DateTime.now << 1))).order(:score.desc)
   end
 
 end
