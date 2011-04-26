@@ -216,7 +216,7 @@ class TumblrMachine< Sinatra::Base
           if ta = fetched_tags[t] || Tag.first(:name => t)
               score += ta.value
           else
-            ta = Tag.create(:name => t, :value => nil, :fetch => false, :value => 0)
+            ta = Tag.create(:name => t, :value => 0, :fetch => false, :value => 0)
             fetched_tags[t] = ta
           end
           post_db.add_tag ta
