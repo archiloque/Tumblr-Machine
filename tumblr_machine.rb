@@ -207,9 +207,9 @@ class TumblrMachine< Sinatra::Base
           tumblr = Tumblr.create(:name => post[:tumblr_name], :url => post[:tumblr_url])
         end
         post_db.tumblr = tumblr
+        post_db.score = 0
         post_db.fetched = DateTime.now
         post_db.save
-
         score = 0
 
         post[:tags].each do |t|
