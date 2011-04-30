@@ -118,6 +118,8 @@ a:hover {
     min-width: 50px;
 }
 
-#actions form {
-    display: inline;
+#actions a {
+    border: 1px #ccc solid;
+    padding: 2px 5px;
+    border-radius: 5px;
 }

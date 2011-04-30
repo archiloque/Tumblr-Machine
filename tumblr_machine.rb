@@ -140,9 +140,9 @@ class TumblrMachine< Sinatra::Base
 
   # fetch content of next tags
   get '/fetch_next_tags' do
-    check_logged_ajax
+    check_logged
 
-    tags = Tag.filter(:fetch => true).order(:last_fetch.asc).limit(10)
+    tags = Tag.filter(:fetch => true).order(:last_fetch.asc).limit(20)
     cache = {}
     tags_names = []
     tags.each do |t|
@@ -150,20 +150,23 @@ class TumblrMachine< Sinatra::Base
       tags_names << t.name
     end
     posts_count = fetch_tags tags_names, cache
-    "Fetched #{tags_names.join(', ')}: #{posts_count} posts added"
+
+    flash[:notice] = "Fetched #{tags_names.join(', ')}: #{posts_count} posts added"
+    redirect '/'
   end
 
   # reblog the next post
   get '/reblog_next' do
-    check_logged_ajax
+    check_logged
 
     post = next_posts().first
     if post
       reblog post
-      "Posted #{post.tumblr.url}/post/#{post.id}"
+      flash[:notice] ="Posted #{post.tumblr.url}/post/#{post.id}"
     else
-      "Nothing to post"
+      flash[:notice] = "Nothing to post"
     end
+    redirect '/'
   end
 
   # Reblog a post
@@ -181,12 +184,13 @@ class TumblrMachine< Sinatra::Base
 
   # clean old posts
   get '/clean' do
-    check_logged_ajax
+    check_logged
 
     Post.filter('fetched < ?', (DateTime.now - 15)).destroy
     Tumblr.filter('id not in (select distinct(tumblr_id) from posts)').filter('last_reblogged_post < ?', (DateTime.now << 1)).delete
     Tag.filter(:fetch => false, :value => nil).filter('id not in (select distinct(tag_id) from posts_tags)').delete
-    "Cleaning done"
+    flash[:notice] = "Cleaning done"
+    redirect '/'
   end
 
   # recalculate score of existing posts
@@ -222,7 +226,7 @@ class TumblrMachine< Sinatra::Base
 
         post[:tags].each do |t|
           if ta = fetched_tags[t] || Tag.first(:name => t)
-              score += ta.value
+            score += ta.value
           else
             ta = Tag.create(:name => t, :value => 0, :fetch => false, :value => 0)
             fetched_tags[t] = ta

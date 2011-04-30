@@ -14,14 +14,6 @@ $(document).ready(function() {
     });
 });
 
-function clean() {
-    callAndDisplayResult('/clean');
-}
-
-function fetchNextTags() {
-    callAndDisplayResult('/fetch_next_tags');
-}
-
 function fetch(tag) {
     callAndDisplayResult('/fetch/' + tag);
 }
@@ -39,9 +31,7 @@ function skip(id) {
 }
 
 function reblogNext() {
-    if (confirm("Are you sure you want to reblog the next post ?")) {
-        callAndDisplayResult('/reblog_next');
-    }
+    return confirm("Are you sure you want to reblog the next post ?");
 }
 
 function callAndDisplayResult(url) {

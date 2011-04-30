@@ -103,15 +103,9 @@
   <h2>Actions</h2>
 
   <div id="actions">
-    <form onsubmit="clean(); return false;">
-      <input type="submit" value="Clean"/>
-    </form>
-    <form onsubmit="fetchNextTags(); return false;">
-      <input type="submit" value="Fetch next tags"/>
-    </form>
-    <form onsubmit="reblogNext(); return false;">
-      <input type="submit" value="Reblog next post"/>
-    </form>
+    <a href="/fetch_next_tags">Fetch next tags</a>
+    <a onclick="return reblogNext();" href="/reblog_next">Reblog next post</a>
+    <a href="/clean">Clean</a>
   </div>
 
 </div>
