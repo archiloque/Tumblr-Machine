@@ -25,6 +25,11 @@ class TumblrApi
             post_id = item[:id]
             post[:id] = post_id[(post_id.rindex('_') +1) .. -1].to_i
 
+            image = item.search('.image_thumbnail')
+            if image && image[0]
+              post[:img_url] = image[0][:src]
+            end
+
             post_info = item.search('.post_info a')[0]
             post[:tumblr_name] = post_info.content
             post[:tumblr_url] = post_info[:href]

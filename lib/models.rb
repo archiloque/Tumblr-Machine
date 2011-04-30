@@ -55,6 +55,12 @@ migration 'skipping posts' do
   end
 end
 
+migration 'posts img' do
+  database.alter_table :posts do
+    add_column :img_url, :text, :null => true
+  end
+end
+
 #models
 class Tag < Sequel::Model
   many_to_many :posts

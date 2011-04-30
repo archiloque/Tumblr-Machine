@@ -221,6 +221,7 @@ class TumblrMachine< Sinatra::Base
         post_db.tumblr = tumblr
         post_db.score = 0
         post_db.fetched = DateTime.now
+        post_db.img_url = post[:img_url]
         post_db.save
         score = 0
 
