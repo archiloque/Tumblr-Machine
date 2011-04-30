@@ -142,7 +142,7 @@ class TumblrMachine< Sinatra::Base
   get '/fetch_next_tags' do
     check_logged
 
-    tags = Tag.filter(:fetch => true).order(:last_fetch.asc).limit(20)
+    tags = Tag.filter(:fetch => true).order(:last_fetch.asc).limit(10)
     cache = {}
     tags_names = []
     tags.each do |t|
