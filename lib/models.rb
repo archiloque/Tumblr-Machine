@@ -61,6 +61,12 @@ migration 'posts img' do
   end
 end
 
+migration 'fetched index' do
+  database.alter_table :posts do
+    add_index :fetched, :unique => false
+  end
+end
+
 #models
 class Tag < Sequel::Model
   many_to_many :posts

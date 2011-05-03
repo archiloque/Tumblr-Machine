@@ -251,7 +251,7 @@ class TumblrMachine< Sinatra::Base
 
   # Finder for the next posts
   def next_posts
-    Post.eager(:tumblr).eager(:tags).filter(~{:skip => true}).filter(:posted => false).filter(:tumblr_id => Tumblr.select(:id).filter('tumblrs.last_reblogged_post is null or tumblrs.last_reblogged_post < ?', (DateTime.now << 1))).order(:score.desc)
+    Post.eager(:tumblr).eager(:tags).filter(~{:skip => true}).filter(:posted => false).filter(:tumblr_id => Tumblr.select(:id).filter('tumblrs.last_reblogged_post is null or tumblrs.last_reblogged_post < ?', (DateTime.now << 1))).order(:score.desc, :fetched.desc)
   end
 
 end
