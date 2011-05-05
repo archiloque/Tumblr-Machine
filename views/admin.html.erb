@@ -12,8 +12,6 @@
 </head>
 <body>
 
-<h1 id="title">Tumblr Machine</h1>
-
 <div id="messages">
   <% if flash[:error] %>
       <div id="error" class="flash"><%= flash[:error] %></div>
@@ -28,111 +26,94 @@
   <% end %>
 </div>
 
-<div id="left">
-  <h2>Next posts</h2>
-  <table id="tagsPosts">
-    <thead>
-    <tr>
-      <th class="actionTd2"></th>
-      <th>Image</th>
-      <th>Score</th>
-      <th>Tumblr</th>
-      <th>Tags</th>
-    </tr>
-    </thead>
-    <tbody>
-    <% @posts.each do |post| %>
-        <tr>
-          <td>
-            <%= "<a class=\"b\" target=\"_blank\" href=\"#{post.tumblr.url}/post/#{post.id}\" title=\"View Post\">☞</a>" %>
-            <%= "<a class=\"b\" onclick=\"reblog(#{post.id}); return false;\" title=\"Reblog\">♻</a>" %>
-            <%= "<a class=\"b\" onclick=\"skip(#{post.id}); return false;\" title=\"Skip\">⊗</a>" %>
-          </td>
-          <td><%= post.img_url ? "<a target=\"_blank\" href=\"#{post.tumblr.url}/post/#{post.id}\"><img src=\"#{post.img_url}\"></a>" : "" %></td>
-          <td class="r"><%= post.score %></td>
-          <td><%= "<a title=\"Go to blog\" target=\"_blank\" href='#{post.tumblr.url}'>#{post.tumblr.name}</a>" %></td>
-          <td><%= post.tags.collect { |t| TumblrApi.tag_to_link(t.name, ("#{t.name}#{(t.value != 0) ? "(#{t.value})" : ''}")) }.join(', ') %></td>
-        </tr>
-    <% end %>
-    </tbody>
-  </table>
+<h1 id="title">Tumblr Machine</h1>
 
-  <h2>Configured tags</h2>
-  <table id="tagsTable1" class="tagsTable">
-    <thead>
-    <tr>
-      <th class="actionTd"></th>
-      <th>Name</th>
-      <th>Value</th>
-      <th>Fetch</th>
-      <th>Last Fetch Date</th>
-      <th>Posts</th>
-    </tr>
-    </thead>
-    <tbody>
-    <% @tags1.each do |tag| %>
-        <tr>
-          <td><%= "<a title=\"Fetch this tag\" onclick=\"fetch(\"#{tag[:n]}\"); return false;\">⌘</a>" %></td>
-          <td><%= TumblrApi.tag_to_link(tag[:n]) %></td>
-          <td class="r"><%= tag[:v] %></td>
-          <td><%= tag[:f] ? 'true' : 'false' %></td>
-          <td><%= display_date_time(tag[:f] ? tag[:l] : nil) %></td>
-          <td class="r"><%= tag[:c] %></td>
-        </tr>
-    <% end %>
-    </tbody>
-  </table>
+<h2>Actions</h2>
 
+<div id="actions">
+  <a href="/fetch_next_tags">Fetch next tags</a>
+  <a onclick="seeAllTags(); return false;" href="/reblog_next">See all tags</a>
+  <a href="/clean">Clean</a>
 </div>
-<div id="right">
 
-  <h2>Actions</h2>
+<h2>Next posts</h2>
+<table id="tagsPosts">
+  <thead>
+  <tr>
+    <th id="actionTdMain"></th>
+    <th>Image</th>
+    <th>Score</th>
+    <th>Tumblr</th>
+    <th>Tags</th>
+  </tr>
+  </thead>
+  <tbody>
+  <% @posts.each do |post| %>
+      <tr>
+        <td>
+          <%= "<a class=\"b\" target=\"_blank\" href=\"#{post.tumblr.url}/post/#{post.id}\" title=\"View Post\">☞</a>" %>
+          <%= "<a class=\"b\" onclick=\"reblog(#{post.id}); return false;\" title=\"Reblog\">♻</a>" %>
+          <%= "<a class=\"b\" onclick=\"skip(#{post.id}); return false;\" title=\"Skip\">⊗</a>" %>
+        </td>
+        <td><%= post.img_url ? "<a target=\"_blank\" href=\"#{post.tumblr.url}/post/#{post.id}\"><img src=\"#{post.img_url}\"></a>" : "" %></td>
+        <td class="r"><%= post.score %></td>
+        <td><%= "<a title=\"Go to blog\" target=\"_blank\" href='#{post.tumblr.url}'>#{post.tumblr.name}</a>" %></td>
+        <td><%= post.tags.collect { |t| TumblrApi.tag_to_link(t.name, ("#{t.name}#{(t.value != 0) ? "(#{t.value})" : ''}")) }.join(', ') %></td>
+      </tr>
+  <% end %>
+  </tbody>
+</table>
 
-  <div id="actions">
-    <a href="/fetch_next_tags">Fetch next tags</a>
-    <a onclick="return reblogNext();" href="/reblog_next">Reblog next post</a>
-    <a href="/clean">Clean</a>
-  </div>
+<div id="addOns">
+  <div>
+      <h2>Add / Edit tag</h2>
 
-  <h2>Add / Edit tag</h2>
-
-  <form action="/edit_tag" method="post">
-    <ul class="inputElement">
-      <li>
-        <label>Name <input type="text" name="tagName"></label>
-      </li>
-      <li>
-        <label>Value <input type="number" name="tagValue"></label>
-      </li>
-      <li>
-        <label>Fetch <input type="checkbox" name="tagFetch" checked="checked"></label>
-      </li>
-      <li>
-        <input name="add_tag" type="submit" value="Submit"/>
-      </li>
-    </ul>
-  </form>
-
-  <h2>Other tags</h2>
-  <table id="tagsTable2" class="tagsTable">
-    <thead>
-    <tr>
-      <th class="actionTd"></th>
-      <th>Name</th>
-      <th>Posts</th>
-    </tr>
-    </thead>
-    <tbody>
-    <% @tags2.each do |tag| %>
+      <form action="/edit_tag" method="post">
+        <ul class="inputElement">
+          <li>
+            <label>Name <input type="text" name="tagName"></label>
+          </li>
+          <li>
+            <label>Value <input type="number" name="tagValue"></label>
+          </li>
+          <li>
+            <label>Fetch <input type="checkbox" name="tagFetch" checked="checked"></label>
+          </li>
+          <li>
+            <input name="add_tag" type="submit" value="Submit"/>
+          </li>
+        </ul>
+      </form>
+    </div>
+    <div>
+      <h2>Configured tags</h2>
+      <table id="tagsTableMain" class="tagsTable">
+        <thead>
         <tr>
-          <td><%= "<a title=\"Fetch this tag\" onclick=\"fetch(\"#{tag[:n]}\"); return false;\">⌘</a>" %></td>
-          <td><%= TumblrApi.tag_to_link(tag[:n]) %></td>
-          <td class="r"><%= tag[:c] %></td>
+          <th class="actionTd"></th>
+          <th>Name</th>
+          <th>Value</th>
+          <th>Fetch</th>
+          <th>Last Fetch Date</th>
+          <th>Posts</th>
         </tr>
-    <% end %>
-    </tbody>
-  </table>
+        </thead>
+        <tbody>
+        <% @tags.each do |tag| %>
+            <tr>
+              <td><%= "<a title=\"Fetch this tag\" onclick=\"fetch(\"#{tag[:n]}\"); return false;\">⌘</a>" %></td>
+              <td><%= TumblrApi.tag_to_link(tag[:n]) %></td>
+              <td class="r"><%= tag[:v] %></td>
+              <td><%= tag[:f] ? 'true' : 'false' %></td>
+              <td><%= display_date_time(tag[:f] ? tag[:l] : nil) %></td>
+              <td class="r"><%= tag[:c] %></td>
+            </tr>
+        <% end %>
+        </tbody>
+      </table>
+    </div>
 </div>
+
 </body>
 </html>
 

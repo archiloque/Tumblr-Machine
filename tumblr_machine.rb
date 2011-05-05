@@ -60,16 +60,11 @@ class TumblrMachine< Sinatra::Base
   get '/' do
     check_logged
 
-    @tags1 = database['select tags.name as n, tags.fetch as f, tags.last_fetch as l, tags.value as v, count(posts_tags.post_id) as c ' +
-                          'from tags left join posts_tags on tags.id = posts_tags.tag_id ' +
-                          'where tags.value != 0 or tags.fetch = ? ' +
-                          'group by tags.name, tags.fetch, tags.last_fetch, tags.value ' +
-                          'order by tags.fetch desc, tags.value desc, c desc, tags.name asc', true]
-    @tags2 = database['select tags.name as n, count(posts_tags.post_id) as c ' +
-                          'from tags left join posts_tags on tags.id = posts_tags.tag_id ' +
-                          'where tags.value = 0 and tags.fetch = ? ' +
-                          'group by tags.name ' +
-                          'order by c desc, tags.name asc', false]
+    @tags = database['select tags.name as n, tags.fetch as f, tags.last_fetch as l, tags.value as v, count(posts_tags.post_id) as c ' +
+                         'from tags left join posts_tags on tags.id = posts_tags.tag_id ' +
+                         'where tags.value != 0 or tags.fetch = ? ' +
+                         'group by tags.name, tags.fetch, tags.last_fetch, tags.value ' +
+                         'order by tags.fetch desc, tags.value desc, c desc, tags.name asc', true]
     @posts = next_posts().limit(10)
     erb :'admin.html'
   end
@@ -156,17 +151,15 @@ class TumblrMachine< Sinatra::Base
   end
 
   # reblog the next post
-  get '/reblog_next' do
-    check_logged
+  get '/otherTags' do
+    check_logged_ajax
 
-    post = next_posts().first
-    if post
-      reblog post
-      flash[:notice] ="Posted #{post.tumblr.url}/post/#{post.id}"
-    else
-      flash[:notice] = "Nothing to post"
-    end
-    redirect '/'
+    @tags = database['select tags.name as n, count(posts_tags.post_id) as c ' +
+                          'from tags left join posts_tags on tags.id = posts_tags.tag_id ' +
+                          'where tags.value = 0 and tags.fetch = ? ' +
+                          'group by tags.name ' +
+                          'order by c desc, tags.name asc', false]
+    erb :'tags.html'
   end
 
   # Reblog a post
