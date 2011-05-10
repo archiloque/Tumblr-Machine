@@ -55,7 +55,17 @@
           <%= "<a class=\"b\" onclick=\"reblog(#{post.id}); return false;\" title=\"Reblog\">♻</a>" %>
           <%= "<a class=\"b\" onclick=\"skip(#{post.id}); return false;\" title=\"Skip\">⊗</a>" %>
         </td>
-        <td><%= post.img_url ? "<a target=\"_blank\" href=\"#{post.tumblr.url}/post/#{post.id}\"><img src=\"#{post.img_url}\"></a>" : "" %></td>
+        <td>
+          <% if post.img_url %>
+            <%= "<a target=\"_blank\" href=\"#{post.tumblr.url}/post/#{post.id}\">" %>
+              <% if post.height %>
+                <%= "<img src=\"#{post.img_url}\" height=\"#{post.height}\ width=\"#{post.width}\">" %>
+              <% else %>
+                <%= "<img src=\"#{post.img_url}\">" %>
+              <% end %>
+            </a>
+          <% end %>
+        </td>
         <td class="r"><%= post.score %></td>
         <td><%= "<a title=\"Go to blog\" target=\"_blank\" href='#{post.tumblr.url}'>#{post.tumblr.name}</a>" %></td>
         <td><%= post.tags.collect { |t| TumblrApi.tag_to_link(t.name, ("#{t.name}#{(t.value != 0) ? "(#{t.value})" : ''}")) }.join(', ') %></td>
