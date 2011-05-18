@@ -133,6 +133,21 @@ class TumblrMachine< Sinatra::Base
     "Post skipped"
   end
 
+  # fetch next tag from external source
+  get '/fetch_next_tags_external' do
+    tags = Tag.filter(:fetch => true).order(:last_fetch.asc).limit(10)
+    cache = {}
+    tags_names = []
+    tags.each do |t|
+      cache[t.name] = t
+      tags_names << t.name
+    end
+    posts_count = fetch_tags tags_names, cache
+
+    "OK"
+  end
+
+
   # fetch content of next tags
   get '/fetch_next_tags' do
     check_logged
