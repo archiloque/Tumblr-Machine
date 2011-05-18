@@ -67,6 +67,13 @@ migration 'fetched index' do
   end
 end
 
+migration 'images sizes' do
+  database.alter_table :posts do
+    add_column :height, :integer, :null => true
+    add_column :width, :integer, :null => true
+  end
+end
+
 #models
 class Tag < Sequel::Model
   many_to_many :posts

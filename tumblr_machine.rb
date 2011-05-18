@@ -65,7 +65,7 @@ class TumblrMachine< Sinatra::Base
                          'where tags.value != 0 or tags.fetch = ? ' +
                          'group by tags.name, tags.fetch, tags.last_fetch, tags.value ' +
                          'order by tags.fetch desc, tags.value desc, c desc, tags.name asc', true]
-    @posts = next_posts().limit(10)
+    @posts = next_posts().limit(20)
     erb :'admin.html'
   end
 
@@ -230,6 +230,8 @@ class TumblrMachine< Sinatra::Base
         post_db.score = 0
         post_db.fetched = DateTime.now
         post_db.img_url = post[:img_url]
+        post_db.height = post[:height]
+        post_db.width = post[:width]
         post_db.save
         score = 0
 
