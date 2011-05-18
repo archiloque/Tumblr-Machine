@@ -142,7 +142,7 @@ class TumblrMachine< Sinatra::Base
       cache[t.name] = t
       tags_names << t.name
     end
-    posts_count = fetch_tags tags_names, cache
+    fetch_tags tags_names, cache
 
     "OK"
   end
