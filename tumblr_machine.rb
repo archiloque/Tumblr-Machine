@@ -149,7 +149,7 @@ class TumblrMachine< Sinatra::Base
 
 
   # fetch content of next tags
-  get '/fetch_next_tags' do
+  post '/fetch_next_tags' do
     check_logged
 
     tags = Tag.filter(:fetch => true).order(:last_fetch.asc).limit(10)
@@ -177,6 +177,12 @@ class TumblrMachine< Sinatra::Base
     erb :'tags.html'
   end
 
+  post '/skip_unposted' do
+    check_logged
+    Post.filter(:id => params[:posts].split(',').collect{|i| i.to_i}).filter(:skip => nil).filter(:posted => false).update({:skip => true})
+    redirect '/'
+  end
+
   # Reblog a post
   get '/reblog/:id' do
     check_logged_ajax
@@ -191,7 +197,7 @@ class TumblrMachine< Sinatra::Base
   end
 
   # clean old posts
-  get '/clean' do
+  post '/clean' do
     check_logged
 
     Post.filter('fetched < ?', (DateTime.now - 15)).destroy

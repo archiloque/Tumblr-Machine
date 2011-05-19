@@ -31,9 +31,9 @@
 <h2>Actions</h2>
 
 <div id="actions">
-  <a href="/fetch_next_tags">Fetch next tags</a>
-  <a onclick="seeAllTags(); return false;" href="/reblog_next">See all tags</a>
-  <a href="/clean">Clean</a>
+  <form method=post action="/fetch_next_tags"><input type="submit" value="Fetch next tags"></form>
+  <form method=post action="/clean"><input type="submit" value="Clean"></form>
+  <a onclick="seeAllTags(); return false;" href="#">See all tags</a>
 </div>
 
 <h2>Next posts</h2>
@@ -73,6 +73,11 @@
   <% end %>
   </tbody>
 </table>
+
+<form method=post action="/skip_unposted">
+  <input type="hidden" name="posts" value="<%= @posts.collect{|p| p.id}.join(',') %>">
+  <input type="submit" value="Skip unposted">
+</form>
 
 <div id="addOns">
   <div>

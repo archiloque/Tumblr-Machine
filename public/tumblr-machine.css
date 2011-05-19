@@ -109,3 +109,7 @@ a:hover {
     display: table-cell;
     padding-right: 10px;
 }
+
+#actions form {
+    display: inline;
+}
