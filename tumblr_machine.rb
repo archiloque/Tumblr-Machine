@@ -170,16 +170,16 @@ class TumblrMachine< Sinatra::Base
     check_logged_ajax
 
     @tags = database['select tags.name as n, count(posts_tags.post_id) as c ' +
-                          'from tags left join posts_tags on tags.id = posts_tags.tag_id ' +
-                          'where tags.value = 0 and tags.fetch = ? ' +
-                          'group by tags.name ' +
-                          'order by c desc, tags.name asc', false]
+                         'from tags left join posts_tags on tags.id = posts_tags.tag_id ' +
+                         'where tags.value = 0 and tags.fetch = ? ' +
+                         'group by tags.name ' +
+                         'order by c desc, tags.name asc', false]
     erb :'tags.html'
   end
 
   post '/skip_unposted' do
     check_logged
-    Post.filter(:id => params[:posts].split(',').collect{|i| i.to_i}).filter(:skip => nil).filter(:posted => false).update({:skip => true})
+    Post.filter(:id => params[:posts].split(',').collect { |i| i.to_i }).filter(:skip => nil).filter(:posted => false).update({:skip => true})
     redirect '/'
   end
 
@@ -229,7 +229,11 @@ class TumblrMachine< Sinatra::Base
         posts_count += 1
         post_db = Post.new
         post_db.id = post[:id]
-        unless tumblr = Tumblr.first(:name => post[:tumblr_name])
+        if tumblr = Tumblr.first(:url => post[:tumblr_url])
+          if tumblr.name != post[:tumblr_name]
+            tumblr.update(:name => post[:tumblr_name])
+          end
+        else
           tumblr = Tumblr.create(:name => post[:tumblr_name], :url => post[:tumblr_url])
         end
         post_db.tumblr = tumblr

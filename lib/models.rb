@@ -74,6 +74,12 @@ migration 'images sizes' do
   end
 end
 
+migration 'tumblr name can change' do
+  database.alter_table :tumblrs do
+    drop_index :name
+  end
+end
+
 #models
 class Tag < Sequel::Model
   many_to_many :posts
