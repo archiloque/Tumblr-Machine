@@ -202,7 +202,7 @@ class TumblrMachine< Sinatra::Base
 
     Post.filter('fetched < ?', (DateTime.now - 15)).destroy
     Tumblr.filter('id not in (select distinct(tumblr_id) from posts)').filter('last_reblogged_post < ?', (DateTime.now << 1)).delete
-    Tag.filter(:fetch => false, :value => nil).filter('id not in (select distinct(tag_id) from posts_tags)').delete
+    Tag.filter(:fetch => false, :value => 0).filter('id not in (select distinct(tag_id) from posts_tags)').delete
     flash[:notice] = "Cleaning done"
     redirect '/'
   end
