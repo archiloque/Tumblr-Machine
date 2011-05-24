@@ -74,9 +74,9 @@ migration 'images sizes' do
   end
 end
 
-migration 'tumblr name can change' do
+migration 'tumblr name can change 2' do
   database.alter_table :tumblrs do
-    drop_index :name
+    drop_index [:name], :name => 'tumblrs_name_key'
   end
 end
 
