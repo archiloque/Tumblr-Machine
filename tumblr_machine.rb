@@ -125,14 +125,6 @@ class TumblrMachine< Sinatra::Base
     "Fetched [#{params[:tag]}], #{posts_count} posts added"
   end
 
-  # Skip this post
-  get '/skip/:post_id' do
-    check_logged_ajax
-
-    Post.filter(:id => params[:post_id]).update({:skip => true})
-    "Post skipped"
-  end
-
   # fetch next tag from external source
   get '/fetch_next_tags_external' do
     tags = Tag.filter(:fetch => true).order(:last_fetch.asc).limit(10)
