@@ -99,7 +99,7 @@ a:hover {
     min-width: 50px;
 }
 
-#actions a {
+a.button {
     border: 1px #ccc solid;
     padding: 2px 5px;
     border-radius: 5px;
