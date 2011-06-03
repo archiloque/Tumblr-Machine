@@ -42,7 +42,6 @@
   <tr>
     <th id="actionTdMain"></th>
     <th>Image</th>
-    <th>Score</th>
     <th>Tumblr</th>
     <th>Tags</th>
   </tr>
@@ -66,7 +65,6 @@
             </a>
           <% end %>
         </td>
-        <td class="r"><%= post.score %></td>
         <td><%= "<a title=\"Go to blog\" target=\"_blank\" href='#{post.tumblr.url}'>#{post.tumblr.name}</a>" %></td>
         <td><%= post.tags.collect { |t| TumblrApi.tag_to_link(t.name, ("#{t.name}#{(t.value != 0) ? "(#{t.value})" : ''}")) }.join(', ') %></td>
       </tr>
