@@ -50,7 +50,7 @@
   <% @posts.each do |post| %>
       <tr>
         <td>
-          <%= "<a class=\"b\" onclick=\"reblog(#{post.id}); return false;\" title=\"Reblog\">♻</a>" %>
+          <%= "<a class=\"button\" onclick=\"reblog(#{post.id}); return false;\" title=\"Reblog\">Reblog</a>" %>
         </td>
         <td>
           <% if post.img_url %>
