@@ -87,6 +87,10 @@ a:hover {
     font-size: 14px;
 }
 
+.c {
+    text-align: center;
+}
+
 .r {
     text-align: right;
 }
