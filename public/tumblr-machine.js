@@ -1,15 +1,12 @@
 $(document).ready(function() {
     $(".tagsTable").tablesorter();
-    $("#tagsTableMain tr").click(function(e) {
-        var children = $(e.currentTarget).children();
-        $('input[name=tagName]').val($(children[1]).children()[0].text);
-        $('input[name=tagValue]').val($(children[2]).html());
-        $('input[name=tagFetch]').attr('checked', $(children[3]).text() == 'true');
-    });
 });
 
-function fetch(tag) {
-    callAndDisplayResult('/fetch/' + tag);
+function editTag(name, value, fetch) {
+    $('input[name=tagName]').val(name);
+    $('input[name=tagValue]').val(value);
+    $('input[name=tagFetch]').attr('checked', fetch == 0);
+
 }
 
 function reblog(id) {

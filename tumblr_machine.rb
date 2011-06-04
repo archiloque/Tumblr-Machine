@@ -116,13 +116,14 @@ class TumblrMachine< Sinatra::Base
     end
   end
 
-  # Fetch this tag
+  # Fetch a tag
   get '/fetch/:tag_name' do
-    check_logged_ajax
+    check_logged
 
     tag = Tag.filter(:name => params[:tag_name]).first
     posts_count = fetch_tags([tag.name], {tag.name => tag})
-    "Fetched [#{params[:tag]}], #{posts_count} posts added"
+    flash[:notice] = "Fetched [#{params[:tag_name]}], #{posts_count} posts added"
+    redirect '/'
   end
 
   # fetch next tag from external source

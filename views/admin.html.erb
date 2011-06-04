@@ -103,23 +103,26 @@
     <table id="tagsTableMain" class="tagsTable">
       <thead>
       <tr>
-        <th class="actionTd"></th>
         <th>Name</th>
         <th>Value</th>
         <th>Fetch</th>
         <th>Last Fetch Date</th>
         <th>Posts</th>
+        <th>Actions</th>
       </tr>
       </thead>
       <tbody>
       <% @tags.each do |tag| %>
           <tr>
-            <td><%= "<a title=\"Fetch this tag\" onclick=\"fetch(\"#{tag[:n]}\"); return false;\">⌘</a>" %></td>
             <td><%= TumblrApi.tag_to_link(tag[:n]) %></td>
             <td class="r"><%= tag[:v] %></td>
             <td><%= tag[:f] ? 'true' : 'false' %></td>
             <td><%= display_date_time(tag[:f] ? tag[:l] : nil) %></td>
             <td class="r"><%= tag[:c] %></td>
+            <td>
+              <a class="button" title="Fetch this tag" href="fetch/<%= tag[:n] %>">Fetch</a>
+              <a class="button" title="Edit this tag" onclick="editTag(<%= "'#{tag[:n]}', #{tag[:v]}, #{tag[:f] ? 0 : 1}"%>); return false;">Edit</a>
+            </td>
           </tr>
       <% end %>
       </tbody>
