@@ -7,6 +7,9 @@ require 'typhoeus'
 # Api to communicate with Tumblr
 class TumblrApi
 
+  # parse the javascript of the onclick property of the image to get info of the large version
+  IMAGE_SIZE_REGEX = /.*this.src='([^']*)'.*else.*width.*'(\d*)px'.*height.*'(\d*)px'.*/m
+
   # Fetch the last images posts for a list of tags
   # Returns an array describing the posts
   # Note: the the found tags are normalized (lower case and uniq)
@@ -27,9 +30,17 @@ class TumblrApi
 
             image = item.at('.image_thumbnail')
             if image
-              post[:img_url] = image[:src]
-              post[:width] = image[:width]
-              post[:height] = image[:height]
+              # try to get the large image info from the javascript
+              if r = IMAGE_SIZE_REGEX.match(image[:onclick])
+                post[:img_url] = r[1]
+                post[:width] = r[2].to_i
+                post[:height] = r[3].to_i
+              else
+                # failed: get the info of the small image
+                post[:img_url] = image[:src]
+                post[:width] = image[:width]
+                post[:height] = image[:height]
+              end
             end
 
             post_info = item.at('.post_info a')
