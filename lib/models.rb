@@ -31,17 +31,17 @@ end
 
 migration 'larger columns for posts ids' do
   database.alter_table :posts do
-     set_column_type :id, Bignum
+    set_column_type :id, Bignum
   end
   database.alter_table :posts_tags do
-     set_column_type :post_id, Bignum
+    set_column_type :post_id, Bignum
   end
 end
 
 migration 'no null tags score' do
   database.run 'update tags set value = 0 where value is null'
   database.alter_table :tags do
-     set_column_allow_null :value, false
+    set_column_allow_null :value, false
   end
   database.run 'update posts set score = 0 where score is null'
   database.alter_table :posts do
