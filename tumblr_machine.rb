@@ -65,7 +65,7 @@ class TumblrMachine< Sinatra::Base
                          'where tags.value != 0 or tags.fetch = ? ' +
                          'group by tags.name, tags.fetch, tags.last_fetch, tags.value ' +
                          'order by tags.fetch desc, tags.value desc, c desc, tags.name asc', true]
-    @posts = next_posts().limit(20)
+    @posts = next_posts().limit(40)
     erb :'admin.html'
   end
 
