@@ -15,7 +15,7 @@ class TumblrApi
   # Note: the the found tags are normalized (lower case and uniq)
   def self.fetch_tags tags_names
     posts = []
-    hydra = Typhoeus::Hydra.new
+    hydra = Typhoeus::Hydra.new({:max_concurrency => 4})
     hydra.disable_memoization
     tags_names.each do |tag_name|
       url = "http://www.tumblr.com/tagged/#{tag_name.sub(' ', '+')}"
