@@ -20,8 +20,8 @@ Code should be easy to hack on, contact me for any question.
 - password same thing
 - tumblr_name your tumblr's name
 - openid_uri the openid uri for authentication
-- DATABASE_URL database url, syntax is described here[http://sequel.rubyforge.org/rdoc/files/doc/opening_databases_rdoc.html], remember to add the required database gem
-- deduplication: enable image deduplication through the Phashion[https://github.com/mperham/phashion] gem, requires GraphicsMagick or ImageMagick and a database with the hamming function (to calculate similarity between images). The current code works with PostgreSQl and requires installing the pg_similarity[http://pgsimilarity.projects.postgresql.org/] package.
+- DATABASE_URL database url, syntax is described [here](http://sequel.rubyforge.org/rdoc/files/doc/opening_databases_rdoc.html), remember to add the required database gem
+- deduplication: enable image deduplication through the [Phashion](https://github.com/mperham/phashion) gem, requires GraphicsMagick or ImageMagick and a database with the hamming function (to calculate similarity between images). The current code works with PostgreSQl and requires installing the [pg_similarity](http://pgsimilarity.projects.postgresql.org/) package.
 
 # LICENSE
 
