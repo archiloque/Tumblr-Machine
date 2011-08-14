@@ -11,10 +11,9 @@ class TumblrApi
   IMAGE_SIZE_REGEX = /.*this.src='([^']*)'.*else.*width.*'(\d*)px'.*height.*'(\d*)px'.*/m
 
   # Fetch the last images posts for a list of tags
-  # Returns an array describing the posts
+  # Call the block with the image a parameter
   # Note: the the found tags are normalized (lower case and uniq)
-  def self.fetch_tags tags_names
-    posts = []
+  def self.fetch_tags tags_names, &block
     hydra = Typhoeus::Hydra.new({:max_concurrency => 4})
     hydra.disable_memoization
     tags_names.each do |tag_name|
@@ -48,14 +47,13 @@ class TumblrApi
             post[:tumblr_url] = post_info[:href]
 
             post[:tags] = [tag_name].concat(item.search('.tags a').collect { |tag| tag.content[1..-1].downcase }.uniq)
-            posts << post
+            block.call post
           end
         end
       end
       hydra.queue request
     end
     hydra.run
-    posts
   end
 
   # Get the reblog key of a post to be able to reblog it

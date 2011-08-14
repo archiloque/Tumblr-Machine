@@ -4,6 +4,12 @@
   end
 end
 
+# if we enable deduplication
+DEDUPLICATION = ENV['deduplication']
+
+# the level above we consider an image is a duplicate of another
+DUPLICATE_LEVEL = 0.8125
+
 require 'rubygems'
 require 'bundler'
 Bundler.setup
@@ -158,6 +164,11 @@ class TumblrMachine< Sinatra::Base
     redirect '/'
   end
 
+  get '/fetch_next_tags' do
+    redirect '/'
+  end
+
+
   # reblog the next post
   get '/otherTags' do
     check_logged_ajax
@@ -200,6 +211,11 @@ class TumblrMachine< Sinatra::Base
     redirect '/'
   end
 
+  # in case we do a refresh
+  get '/clean' do
+    redirect '/'
+  end
+
   # recalculate score of existing posts
   get '/recalculate_scores' do
     check_logged_ajax
@@ -217,41 +233,94 @@ class TumblrMachine< Sinatra::Base
   def fetch_tags tags_names, fetched_tags = {}
     posts_count = 0
 
-    TumblrApi.fetch_tags(tags_names).each do |post|
-      unless (Post.first(:id => post[:id])) || (post[:tumblr_name] == ENV['tumblr_name'])
-        posts_count += 1
-        post_db = Post.new
-        post_db.id = post[:id]
-        if tumblr = Tumblr.first(:url => post[:tumblr_url])
-          if tumblr.name != post[:tumblr_name]
-            tumblr.update(:name => post[:tumblr_name])
+    if DEDUPLICATION
+      hydra = Typhoeus::Hydra.new({:max_concurrency => 4})
+      hydra.disable_memoization
+      TumblrApi.fetch_tags(tags_names) do |values|
+        if post = create_post(values, fetched_tags)
+          posts_count += 1
+          if post.img_url
+            hydra.queue create_deduplication_request(post)
           end
-        else
-          tumblr = Tumblr.create(:name => post[:tumblr_name], :url => post[:tumblr_url])
         end
-        post_db.tumblr = tumblr
-        post_db.score = 0
-        post_db.fetched = DateTime.now
-        post_db.img_url = post[:img_url]
-        post_db.height = post[:height]
-        post_db.width = post[:width]
-        post_db.save
-        score = 0
-
-        post[:tags].each do |t|
-          if ta = fetched_tags[t] || Tag.first(:name => t)
-            score += ta.value
-          else
-            ta = Tag.create(:name => t, :value => 0, :fetch => false, :value => 0)
-            fetched_tags[t] = ta
-          end
-          post_db.add_tag ta
+      end
+      hydra.run
+    else
+      TumblrApi.fetch_tags(tags_names) do |values|
+        if create_post(values, fetched_tags)
+          posts_count += 1
         end
-        post_db.update({:score => score})
       end
     end
+
     Tag.filter(:name => tags_names).update(:last_fetch => DateTime.now)
     posts_count
+  end
+
+
+  # Create the request to manage deduplication
+  # post:: the post we do the stuff for
+  # return the Request
+  def create_deduplication_request post
+    request = Typhoeus::Request.new post.img_url
+    request.on_complete do |response|
+      if response.code == 200
+        file = Tempfile.new('tumblr-machine')
+        begin
+          file.write response.body
+          file.close
+          fingerprint = Phashion::Image.new(file.path).fingerprint
+          post.update({:fingerprint => Sequel::LiteralString.new("B'#{fingerprint.to_s(2).rjust(64, '0')}'")})
+
+          if database[:posts].filter('fingerprint is not null').filter('id != ?', post.id).filter('hamming(fingerprint, (select fingerprint from posts where id = ?)) >= ?', post.id, DUPLICATE_LEVEL).count > 0
+            post.update({:skip => true})
+          end
+
+        ensure
+          file.close
+          file.unlink
+        end
+      end
+    end
+    request
+  end
+
+  # Create a post if it does not exist
+  # values:: the values used to create the post
+  # fetched_tags:: tags already fetched to be used as a cache
+  # return the Post object
+  def create_post values, fetched_tags
+    unless (Post.first(:id => values[:id])) || (values[:tumblr_name] == ENV['tumblr_name'])
+      post_db = Post.new
+      post_db.id = values[:id]
+      if tumblr = Tumblr.first(:url => values[:tumblr_url])
+        if tumblr.name != values[:tumblr_name]
+          tumblr.update(:name => values[:tumblr_name])
+        end
+      else
+        tumblr = Tumblr.create(:name => values[:tumblr_name], :url => values[:tumblr_url])
+      end
+      post_db.tumblr = tumblr
+      post_db.score = 0
+      post_db.fetched = DateTime.now
+      post_db.img_url = values[:img_url]
+      post_db.height = values[:height]
+      post_db.width = values[:width]
+      post_db.save
+      score = 0
+
+      values[:tags].each do |t|
+        if ta = fetched_tags[t] || Tag.first(:name => t)
+          score += ta.value
+        else
+          ta = Tag.create(:name => t, :value => 0, :fetch => false, :value => 0)
+          fetched_tags[t] = ta
+        end
+        post_db.add_tag ta
+      end
+      post_db.update({:score => score})
+      post_db
+    end
   end
 
   # Reblog a post

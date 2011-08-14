@@ -1,16 +1,27 @@
 # Tumblr Machine
 
-A Tumblr reblogging machine written in ruby.
+A Tumblr feedreader and reblogging tool written in ruby.
 
-Semi-autonomously manage a Tumblr: setup a list of interesting tags and it will pull new posts from the tags then reblog the posts with the best scores.
+Setup a list of interesting tags with a score and it will pull new posts from the tags and display the ones with the highest score, and you'll be able to reblog the one you likes with a single click.
+
+Can process the linked images to eliminates duplicates (see bellow).
 
 Code should be easy to hack on, contact me for any question.
 
 # Instructions
 
 - deploy the application on your server
-- set the environment variables (see top of tumblr_machine.rb for the list)
-- connect to the server and setup the thing
+- set the environment variables (see bellow)
+- connect to the server (the databse structure will be created automatically) and setup the tags
+
+# Environment variables
+
+- email the email to connect to tumblr
+- password same thing
+- tumblr_name your tumblr's name
+- openid_uri the openid uri for authentication
+- DATABASE_URL database url, syntax is described here[http://sequel.rubyforge.org/rdoc/files/doc/opening_databases_rdoc.html], remember to add the required database gem
+- deduplication: enable image deduplication through the Phashion[https://github.com/mperham/phashion] gem, requires GraphicsMagick or ImageMagick and a database with the hamming function (to calculate similarity between images). The current code works with PostgreSQl and requires installing the pg_similarity[http://pgsimilarity.projects.postgresql.org/] package.
 
 # LICENSE
 
