@@ -54,7 +54,7 @@
               <%= "<a class=\"button\" target=\"_blank\" href=\"#{post.tumblr.url}/post/#{post.id}\">View</a>" %>
           <% end %>
         </td>
-        <td class="c">
+        <td class="c p">
           <div><%= "<a class=\"button\" onclick=\"reblog(#{post.id}); return false;\" title=\"Reblog\">Reblog</a>" %></div>
           <div><%= "<a title=\"Go to blog\" target=\"_blank\" href='#{post.tumblr.url}'>#{post.tumblr.name}</a>" %></div>
           <div><%= post.tags.collect { |t| TumblrApi.tag_to_link(t.name, ("#{t.name}#{(t.value != 0) ? "(#{t.value})" : ''}")) }.join(', ') %></div>
