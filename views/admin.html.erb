@@ -38,16 +38,9 @@
 
 <h2>Next posts</h2>
 <table id="tagsPosts">
-  <thead>
-  </thead>
   <tbody>
   <% @posts.each do |post| %>
       <tr>
-        <td>
-          <div><%= "<a class=\"button\" onclick=\"reblog(#{post.id}); return false;\" title=\"Reblog\">Reblog</a>" %></div>
-          <div class="c"><%= "<a title=\"Go to blog\" target=\"_blank\" href='#{post.tumblr.url}'>#{post.tumblr.name}</a>" %></div>
-          <div><%= post.tags.collect { |t| TumblrApi.tag_to_link(t.name, ("#{t.name}#{(t.value != 0) ? "(#{t.value})" : ''}")) }.join(', ') %></div>
-        </td>
         <td>
           <% if post.img_url %>
               <%= "<a target=\"_blank\" href=\"#{post.tumblr.url}/post/#{post.id}\">" %>
@@ -60,6 +53,11 @@
           <% else %>
               <%= "<a class=\"button\" target=\"_blank\" href=\"#{post.tumblr.url}/post/#{post.id}\">View</a>" %>
           <% end %>
+        </td>
+        <td class="c">
+          <div><%= "<a class=\"button\" onclick=\"reblog(#{post.id}); return false;\" title=\"Reblog\">Reblog</a>" %></div>
+          <div><%= "<a title=\"Go to blog\" target=\"_blank\" href='#{post.tumblr.url}'>#{post.tumblr.name}</a>" %></div>
+          <div><%= post.tags.collect { |t| TumblrApi.tag_to_link(t.name, ("#{t.name}#{(t.value != 0) ? "(#{t.value})" : ''}")) }.join(', ') %></div>
         </td>
       </tr>
   <% end %>
