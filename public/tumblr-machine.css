@@ -95,6 +95,10 @@ a:hover {
     text-align: right;
 }
 
+.p div {
+    padding-bottom: 10px;
+}
+
 #actionTdOther {
     min-width: 50px;
 }
