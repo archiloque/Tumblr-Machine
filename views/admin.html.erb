@@ -74,7 +74,7 @@
 
 <form method=post action="/skip_unposted">
   <input type="hidden" name="posts" value="<%= @posts.collect { |p| p.id }.join(',') %>">
-  <input type="submit" value="Skip unposted">
+  <input type="submit" value="Next page">
 </form>
 
 <div id="addOns">
