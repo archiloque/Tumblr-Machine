@@ -1,4 +1,3 @@
 .DS_Store
 .idea
-Gemfile.lock
 tumblr-machine.sqlite3
