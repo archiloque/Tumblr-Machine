@@ -72,6 +72,7 @@ class TumblrMachine< Sinatra::Base
                          'group by tags.name, tags.fetch, tags.last_fetch, tags.value ' +
                          'order by tags.fetch desc, tags.value desc, c desc, tags.name asc', true]
     @posts = next_posts().limit(40)
+    headers "Cache-Control" => "no-cache, must-revalidate"
     erb :'admin.html'
   end
 
@@ -143,6 +144,7 @@ class TumblrMachine< Sinatra::Base
     end
     fetch_tags tags_names, cache
 
+    headers "Cache-Control" => "no-cache, must-revalidate"
     "OK"
   end
 
