@@ -87,16 +87,16 @@ a:hover {
     font-size: 14px;
 }
 
-.c {
+.t {
     text-align: center;
+    max-width: 200px;
+}
+.t div {
+    padding-bottom: 10px;
 }
 
 .r {
     text-align: right;
-}
-
-.p div {
-    padding-bottom: 10px;
 }
 
 #actionTdOther {
