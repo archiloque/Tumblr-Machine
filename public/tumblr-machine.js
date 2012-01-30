@@ -1,7 +1,8 @@
 $(document).ready(function() {
     $(".tagsTable").tablesorter();
      $('#tagsPosts').masonry({
-    itemSelector : '.posts'
+    itemSelector : '.posts',
+    columnWidth: 10
   });
 });
 
