@@ -15,8 +15,6 @@ table {
 #title {
     font-weight: bold;
     font-size: 36px;
-    text-align: center;
-    width: 100%;
 }
 
 h2 {
@@ -58,6 +56,24 @@ h2 {
     padding: 2px;
 }
 
+.postImg {
+    text-align: center;
+}
+
+.post {
+    padding: 5px;
+    margin: 5px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    float: left;
+}
+
+.postInfo {
+    padding-top: 5px;
+    padding-bottom: 5px;
+    text-align: center;
+}
+
 tr {
     padding: 0;
     margin: 0;
@@ -69,7 +85,7 @@ td, th {
     border: 1px solid #ccc;
 }
 
-tbody tr:nth-child(odd) {
+tr:nth-child(even) {
     background-color: #eee;
 }
 
@@ -81,18 +97,6 @@ a {
 a:hover {
     text-decoration: underline;
     cursor: pointer;
-}
-
-.b {
-    font-size: 14px;
-}
-
-.t {
-    text-align: center;
-    max-width: 200px;
-}
-.t div {
-    padding-bottom: 10px;
 }
 
 .r {

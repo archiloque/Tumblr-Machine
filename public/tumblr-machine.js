@@ -1,5 +1,8 @@
 $(document).ready(function() {
     $(".tagsTable").tablesorter();
+     $('#tagsPosts').masonry({
+    itemSelector : '.posts'
+  });
 });
 
 function editTag(name, value, fetch) {
