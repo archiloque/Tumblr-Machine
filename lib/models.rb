@@ -1,5 +1,8 @@
 require 'typhoeus'
-require 'phashion'
+
+if DEDUPLICATION
+  require 'phashion'
+end
 
 #migrations
 migration 'create tables' do
