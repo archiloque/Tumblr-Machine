@@ -57,7 +57,7 @@
                     <%= "<a class=\"button\" target=\"_blank\" href=\"#{post.tumblr.url}/post/#{post.id}\">View Post</a>" %>
                 <% end %>
               </div>
-              <div class="postInfo"<%= (post.img_url && post.width) ? " width=\"#{post.width}px\"" : '' %>>
+              <div class="postInfo"<%= (post.img_url && post.width) ? " style=\"width:#{post.width}px\"" : '' %>>
                 <%= "<a class=\"button\" onclick=\"reblog(#{post.id}); return false;\" title=\"Reblog\">Reblog</a>" %>
                 <%= "<a title=\"Go to blog\" target=\"_blank\" href='#{post.tumblr.url}'>#{post.tumblr.name}</a>" %>
                 –
