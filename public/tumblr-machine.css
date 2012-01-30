@@ -7,7 +7,7 @@ body {
     padding: 0 10px;
 }
 
-table {
+table.borderized {
     border: 1px solid #888888;
     border-collapse: collapse;
 }
