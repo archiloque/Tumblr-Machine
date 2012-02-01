@@ -26,6 +26,7 @@ GEM
     typhoeus (0.3.3)
       mime-types
     tzinfo (0.3.31)
+    xray (1.1)
 
 PLATFORMS
   ruby
@@ -42,3 +43,4 @@ DEPENDENCIES
   sqlite3-ruby
   typhoeus (~> 0.3.3)
   tzinfo (~> 0.3.26)
+  xray
