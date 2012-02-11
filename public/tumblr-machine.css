@@ -7,6 +7,12 @@ body {
     padding: 0 10px;
 }
 
+table, tr, td {
+    padding: 0;
+    margin: 0;
+    outline: 0;
+}
+
 table.borderized {
     border: 1px solid #888888;
     border-collapse: collapse;
@@ -56,13 +62,18 @@ h2 {
     padding: 2px;
 }
 
+#posts {
+    margin-left: -5px;
+    margin-right: -5px;
+}
+
 .postImg {
     text-align: center;
 }
 
 .post {
-    padding: 5px;
-    margin: 5px;
+    padding: 6px;
+    margin: 3px;
     border: 1px solid #ccc;
     border-radius: 5px;
     float: left;
@@ -70,7 +81,6 @@ h2 {
 
 .postInfo {
     padding-top: 5px;
-    padding-bottom: 5px;
     text-align: center;
 }
 
