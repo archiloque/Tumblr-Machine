@@ -308,6 +308,9 @@ class TumblrMachine< Sinatra::Base
       post_db.img_url = values[:img_url]
       post_db.height = values[:height]
       post_db.width = values[:width]
+      unless values[:img_url]
+        post_db.skip = true
+      end
       post_db.save
       score = 0
 
