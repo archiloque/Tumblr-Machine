@@ -14,8 +14,6 @@ require 'rubygems'
 require 'bundler'
 Bundler.setup
 
-require 'xray/thread_dump_signal_handler'
-
 require 'logger'
 require 'sinatra/base'
 
