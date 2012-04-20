@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <link href="/tumblr-machine.css" rel="stylesheet" type="text/css"/>
   <script src="/jquery.js" type="text/javascript"></script>
-  <script src="/jquery.masonry.js" type="text/javascript"></script>
+  <script src="/jquery.isotope.js" type="text/javascript"></script>
   <script src="/jquery.tablesorter.js" type="text/javascript"></script>
   <script src="/tumblr-machine.js" type="text/javascript"></script>
   <link rel="shortcut icon" href="/favicon.ico"/>
@@ -38,33 +38,28 @@
 </div>
 
 <h2>Posts</h2>
-<table id="posts">
-  <tr>
-    <td>
-      <div id="tagsPosts">
-        <% @posts.each do |post| %>
-            <div class="post">
-              <div class="postImg">
-                <%= "<a target=\"_blank\" href=\"#{post.tumblr.url}/post/#{post.id}\">" %>
-                <% if post.height %>
-                    <%= "<img src=\"#{post.img_url}\" height=\"#{post.height}px\" width=\"#{post.width}px\">" %>
-                <% else %>
-                    <%= "<img src=\"#{post.img_url}\">" %>
-                <% end %>
-                </a>
-              </div>
-              <div class="postInfo" style="width:<%= (post.img_url && post.width) ? post.width : 200 %>px">
-                <%= "<a class=\"button\" onclick=\"reblog(#{post.id}); return false;\" title=\"Reblog\">Reblog</a>" %>
-                <%= "<a title=\"Go to blog\" target=\"_blank\" href='#{post.tumblr.url}'>#{post.tumblr.name}</a>" %>
-                –
-                <%= post.tags.collect { |t| TumblrApi.tag_to_link(t.name, ("#{t.name}#{(t.value != 0) ? "(#{t.value})" : ''}")) }.join(', ') %>
-              </div>
-            </div>
-        <% end %>
+
+<div id="tagsPosts">
+  <% @posts.each do |post| %>
+      <div class="post">
+        <div class="postImg">
+          <%= "<a target=\"_blank\" href=\"#{post.tumblr.url}/post/#{post.id}\">" %>
+          <% if post.height %>
+              <%= "<img src=\"#{post.img_url}\" height=\"#{post.height}px\" width=\"#{post.width}px\">" %>
+          <% else %>
+              <%= "<img src=\"#{post.img_url}\">" %>
+          <% end %>
+          </a>
+        </div>
+        <div class="postInfo" style="width:<%= (post.img_url && post.width) ? post.width : 200 %>px">
+          <%= "<a class=\"button\" onclick=\"reblog(#{post.id}); return false;\" title=\"Reblog\">Reblog</a>" %>
+          <%= "<a title=\"Go to blog\" target=\"_blank\" href='#{post.tumblr.url}'>#{post.tumblr.name}</a>" %>
+          –
+          <%= post.tags.collect { |t| TumblrApi.tag_to_link(t.name, ("#{t.name}#{(t.value != 0) ? "(#{t.value})" : ''}")) }.join(', ') %>
+        </div>
       </div>
-    </td>
-  </tr>
-</table>
+  <% end %>
+</div>
 
 <form method=post action="/skip_unposted">
   <input type="hidden" name="posts" value="<%= @posts.collect { |p| p.id }.join(',') %>">

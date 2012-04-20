@@ -1,9 +1,10 @@
-$(document).ready(function() {
-    $(".tagsTable").tablesorter();
-     $('#tagsPosts').masonry({
-    itemSelector : '.posts',
-    columnWidth: 10
-  });
+$(document).ready(function () {
+    $('#tagsPosts').isotope({
+        itemSelector:'.post',
+        masonry: {
+            columnWidth: 2
+    }
+    });
 });
 
 function editTag(name, value, fetch) {
@@ -21,9 +22,9 @@ function reblog(id) {
 
 function seeAllTags() {
     $("#otherTags").remove();
-    $.get('/otherTags', function(data) {
+    $.get('/otherTags', function (data) {
         $('body').append(data);
-        $("#tagsTableOther tr").click(function(e) {
+        $("#tagsTableOther tr").click(function (e) {
             var children = $(e.currentTarget).children();
             $('input[name=tagName]').val($(children[1]).children()[0].text);
             $('input[name=tagValue]').val(0);
@@ -33,19 +34,19 @@ function seeAllTags() {
 }
 
 function callAndDisplayResult(url) {
-    $.get(url, function(data) {
+    $.get(url, function (data) {
         displayMessage(data);
     });
 }
 
 function displayMessage(message) {
-    var displayResult = function() {
+    var displayResult = function () {
         $('#messages').append('<div id="notice" class="flash">' + message + '</div>');
     };
     if ($('.flash').length == 0) {
         displayResult();
     } else {
-        $('.flash').fadeOut(function() {
+        $('.flash').fadeOut(function () {
             $('.flash').remove();
             displayResult();
         });
