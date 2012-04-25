@@ -1,10 +1,6 @@
 $(document).ready(function () {
     $(".tagsTable").tablesorter();
     $('#posts').compactWall($('.post'));
-
-    $(window).resize(function(e){
-        $('#posts').compactWall($('.post'));
-    });
 });
 
 function editTag(name, value, fetch) {
