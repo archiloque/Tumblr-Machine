@@ -27,7 +27,7 @@ class TumblrApi
             post_id = item[:id]
             post[:id] = post_id[(post_id.rindex('_') +1) .. -1].to_i
 
-            image = item.at('.image_thumbnail')
+            image = item.at('.image')
             if image
               # try to get the large image info from the javascript
               if r = IMAGE_SIZE_REGEX.match(image[:onclick])
