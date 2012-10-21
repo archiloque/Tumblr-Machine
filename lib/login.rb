@@ -1,5 +1,16 @@
+require 'oauth'
+
 # session management
 class TumblrMachine
+
+  get '/callback' do
+    request_token=session[:request_token]
+    @access_token = request_token.get_access_token({:oauth_verifier => params[:oauth_verifier]})
+    session[:access_token] = @access_token
+    Meta.create(:key => 'access_token_token', :value => @access_token.token)
+    Meta.create(:key => 'access_token_secret', :value => @access_token.secret)
+    redirect '/'
+  end
 
   get '/login' do
     if resp = request.env['rack.openid.response']
@@ -24,7 +35,9 @@ class TumblrMachine
   private
 
   def check_logged
-    if (!ENV['openid_uri']) || @user_logged
+    if !@access_token
+      oauth_process
+    elsif (!ENV['openid_uri']) || @user_logged
     elsif resp = request.env['rack.openid.response']
       if resp.status == :success
         session[:user] = resp
@@ -43,4 +56,11 @@ class TumblrMachine
       halt
     end
   end
+
+  def oauth_process
+    request_token = @consumer.get_request_token(:oauth_callback => "#{request.scheme}://#{request.host_with_port}/callback")
+    session[:request_token] = request_token
+    redirect request_token.authorize_url
+  end
+
 end

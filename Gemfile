@@ -10,6 +10,7 @@ gem 'rack-flash', '~> 0.1.2'
 gem 'typhoeus', '~> 0.3.3'
 gem 'rack-openid', '~> 1.3.1'
 gem 'phashion', '~> 1.0.4'
+gem 'oauth', '~> 0.4.7'
 
 group :development do
   gem 'sqlite3-ruby'

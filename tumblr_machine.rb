@@ -1,4 +1,4 @@
-['email', 'password', 'tumblr_name', 'openid_uri'].each do |p|
+['consumer_key', 'secret_key', 'tumblr_name', 'openid_uri'].each do |p|
   unless ENV.include? p
     raise "Missing #{p} environment variable"
   end
@@ -60,6 +60,24 @@ class TumblrMachine< Sinatra::Base
 
   before do
     @user_logged = session[:user]
+
+    @consumer = OAuth::Consumer.new(
+        ENV['consumer_key'],
+        ENV['secret_key'],
+        {
+            :site => "http://www.tumblr.com",
+            :scheme => :header,
+            :http_method => :post,
+            :request_token_path => "/oauth/request_token",
+            :authorize_path => "/oauth/authorize"
+        })
+
+    if session[:access_token]
+      @access_token = session[:access_token]
+    elsif ((meta_access_token_token = Meta.first(:key => 'access_token_token')) &&
+          (meta_access_token_secret = Meta.first(:key => 'access_token_secret')))
+      @access_token = OAuth::AccessToken.new(@consumer, meta_access_token_token.value, meta_access_token_secret.value)
+    end
   end
 
   # admin
@@ -274,7 +292,11 @@ class TumblrMachine< Sinatra::Base
           fingerprint = Phashion::Image.new(file.path).fingerprint
           post.update({:fingerprint => Sequel::LiteralString.new("B'#{fingerprint.to_s(2).rjust(64, '0')}'")})
 
-          if database[:posts].filter('fingerprint is not null').filter('id != ?', post.id).filter('hamming(fingerprint, (select fingerprint from posts where id = ?)) >= ?', post.id, DUPLICATE_LEVEL).count > 0
+          if database[:posts].
+              filter('fingerprint is not null').
+              filter('id != ?', post.id).
+              filter('hamming(fingerprint, (select fingerprint from posts where id = ?)) >= ?', post.id, DUPLICATE_LEVEL).
+              count > 0
             post.update({:skip => true})
           end
 
@@ -330,15 +352,21 @@ class TumblrMachine< Sinatra::Base
 
   # Reblog a post
   def reblog post
-    reblog_key = TumblrApi.reblog_key(post.tumblr.url, post.id)
-    TumblrApi.reblog(ENV['email'], ENV['password'], ENV['tumblr_name'], post.id, reblog_key, post.tags.collect { |t| t.name })
+    reblog_key = TumblrApi.reblog_key(ENV['consumer_key'], post.tumblr.name, post.id)
+    TumblrApi.reblog(@access_token, ENV['tumblr_name'], post.id, reblog_key)
     post.update(:posted => true)
     Tumblr.filter(:id => post.tumblr_id).update(:last_reblogged_post => DateTime.now)
   end
 
   # Finder for the next posts
   def next_posts
-    Post.eager(:tumblr).eager(:tags).filter(~{:skip => true}).filter(:posted => false).filter(:tumblr_id => Tumblr.select(:id).filter('tumblrs.last_reblogged_post is null or tumblrs.last_reblogged_post < ?', (DateTime.now << 1))).order(:score.desc, :fetched.desc)
+    Post.
+        eager(:tumblr).
+        eager(:tags).
+        filter(~{:skip => true}).
+        filter(:posted => false).
+        filter(:tumblr_id => Tumblr.select(:id).filter('tumblrs.last_reblogged_post is null or tumblrs.last_reblogged_post < ?', (DateTime.now << 1))).
+        order(:score.desc, :fetched.desc)
   end
 
 end
