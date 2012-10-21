@@ -76,7 +76,7 @@ class TumblrApi
   def self.reblog(access_token, tumblr_name, post_id, reblog_key)
     params = {
         'id' => post_id,
-        'reblog-key' => reblog_key
+        'reblog_key' => reblog_key
     }
     access_token.post("http://api.tumblr.com/v2/blog/#{tumblr_name}.tumblr.com/post/reblog", params)
   end
