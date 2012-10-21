@@ -1,6 +1,6 @@
 $(document).ready(function () {
     $(".tagsTable").tablesorter();
-    $('#posts').compactWall($('.post'), 250);
+    $('#posts').compactWall($('.post'), {'maxTime': 250});
 });
 
 function editTag(name, value, fetch) {
