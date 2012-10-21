@@ -11,13 +11,14 @@ Code should be easy to hack on, contact me for any question.
 # Instructions
 
 - deploy the application on your server
+- register a tumblr application at http://www.tumblr.com/oauth/apps and get the OAuth consumer key and secret key, for the callback url use http://your_webiste/callback
 - set the environment variables (see bellow)
-- connect to the server (the databse structure will be created automatically) and setup the tags
+- connect to the server (the database structure will be created automatically) and setup the tags
 
 # Environment variables
 
-- email the email to connect to tumblr
-- password same thing
+- consumer_key : the application OAuth consumer key
+- secret_key : the application OAuth secret key
 - tumblr_name your tumblr's name
 - openid_uri the openid uri for authentication
 - DATABASE_URL database url, syntax is described [here](http://sequel.rubyforge.org/rdoc/files/doc/opening_databases_rdoc.html), remember to add the required database gem
