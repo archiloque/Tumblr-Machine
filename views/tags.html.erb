@@ -1,21 +1,52 @@
-<div id="otherTags">
-  <h2>Other tags</h2>
-  <table id="tagsTableOther" class="tagsTable borderized">
-    <thead>
-    <tr>
-      <th id="actionTdOther"></th>
-      <th>Name</th>
-      <th>Posts</th>
-    </tr>
-    </thead>
-    <tbody>
-    <% @tags.each do |tag| %>
-        <tr>
-          <td><%= "<a title=\"Fetch this tag\" onclick=\"fetch(\"#{tag[:n]}\"); return false;\">⌘</a>" %></td>
-          <td><%= TumblrApi.tag_to_link(tag[:n]) %></td>
-          <td class="r"><%= tag[:c] %></td>
-        </tr>
-    <% end %>
-    </tbody>
-  </table>
+<div id="tags">
+  <div id="addOns">
+    <h2>Add / Edit tag</h2>
+
+    <form action="/edit_tag" method="post">
+      <ul class="inputElement">
+        <li>
+          <label>Name <input type="text" name="tagName"></label>
+        </li>
+        <li>
+          <label>Value <input type="number" name="tagValue"></label>
+        </li>
+        <li>
+          <label>Fetch <input type="checkbox" name="tagFetch" checked="checked"></label>
+        </li>
+        <li>
+          <input name="add_tag" type="submit" value="Submit"/>
+        </li>
+      </ul>
+    </form>
+  </div>
+  <div>
+    <h2>Configured tags</h2>
+    <table id="tagsTableMain" class="tagsTable borderized">
+      <thead>
+      <tr>
+        <th>Name</th>
+        <th>Value</th>
+        <th>Fetch</th>
+        <th>Last Fetch Date</th>
+        <th>Posts</th>
+        <th>Actions</th>
+      </tr>
+      </thead>
+      <tbody>
+      <% @tags.each do |tag| %>
+          <tr>
+            <td><%= TumblrApi.tag_to_link(tag[:n]) %></td>
+            <td class="r"><%= tag[:v] %></td>
+            <td><%= tag[:f] ? 'true' : 'false' %></td>
+            <td><%= display_date_time(tag[:f] ? tag[:l] : nil) %></td>
+            <td class="r"><%= tag[:c] %></td>
+            <td>
+              <a class="button" title="Fetch this tag" href="fetch/<%= tag[:n] %>">Fetch</a>
+              <a class="button" title="Edit this tag" onclick="editTag(<%= "'#{tag[:n]}', #{tag[:v]}, #{tag[:f] ? 0 : 1}"%>); return false;">Edit</a>
+            </td>
+          </tr>
+      <% end %>
+      </tbody>
+    </table>
+  </div>
 </div>

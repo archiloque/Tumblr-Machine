@@ -62,11 +62,6 @@ h2 {
     padding: 2px;
 }
 
-#posts {
-    margin-left: -5px;
-    margin-right: -5px;
-}
-
 .postImg {
     text-align: center;
 }
@@ -130,4 +125,8 @@ a.button {
 
 #actions form {
     display: inline;
+}
+
+#infos {
+    padding-left: 2px;
 }

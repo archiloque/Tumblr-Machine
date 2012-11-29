@@ -1,6 +1,5 @@
 $(document).ready(function () {
-    $(".tagsTable").tablesorter();
-    $('#posts').compactWall($('.post'), {'maxTime': 500});
+    $('#posts').compactWall($('.post'), {'maxTime':500});
 });
 
 function editTag(name, value, fetch) {
@@ -16,9 +15,18 @@ function reblog(id) {
     }
 }
 
+function seeTags() {
+    $("#tags").remove();
+    $.get('/tags', function (data) {
+        $('body').append(data);
+        $(".tagsTable").tablesorter();
+    });
+
+}
+
 function seeAllTags() {
     $("#otherTags").remove();
-    $.get('/otherTags', function (data) {
+    $.get('/other_tags', function (data) {
         $('body').append(data);
         $("#tagsTableOther tr").click(function (e) {
             var children = $(e.currentTarget).children();

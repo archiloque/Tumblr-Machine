@@ -2,7 +2,7 @@ source :gemcutter
 
 gem 'rack', '~> 1.3.6'
 gem 'sinatra', '~> 1.2.6'
-gem 'sequel', '~> 3.27.0'
+gem 'sequel', '~> 3.40.0'
 gem 'sinatra-sequel', '~> 0.9.0'
 gem 'tzinfo', '~> 0.3.26'
 gem 'nokogiri', '~> 1.5.0'
