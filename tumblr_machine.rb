@@ -85,7 +85,7 @@ class TumblrMachine< Sinatra::Base
     check_logged
     @total_posts = Post.count
     @waiting_posts = Post.
-        where('skip != ?', true).
+        where('skip is not ?', true).
         where('posted = ?', false).
         where('tumblr_id not in (?)', skippable_tumblr_ids).
         where('score >= 2').
@@ -376,7 +376,7 @@ class TumblrMachine< Sinatra::Base
     Post.
         eager(:tumblr).
         eager(:tags).
-        where('skip != ?', true).
+        where('skip is not ?', true).
         where(:posted => false).
         where('tumblr_id not in (?)', skippable_tumblr_ids).
         order(:score.desc, :fetched.desc)
