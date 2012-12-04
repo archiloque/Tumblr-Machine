@@ -14,6 +14,7 @@ Code should be easy to hack on, contact me for any question.
 - register a tumblr application at http://www.tumblr.com/oauth/apps and get the OAuth consumer key and secret key, for the callback url use http://your_webiste/callback
 - set the environment variables (see bellow)
 - connect to the server (the database structure will be created automatically) and setup the tags
+- schedule an http call to /fetch_next_tags_external to retrieve the latest posts for the tags
 
 # Environment variables
 
