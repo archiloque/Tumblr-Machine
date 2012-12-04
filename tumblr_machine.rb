@@ -263,14 +263,14 @@ class TumblrMachine< Sinatra::Base
   # Parameters:
   # - tags_names the tags names
   # - hash of fetched_tags tags already fetched indexed by their names
-  def fetch_tags tags_names, fetched_tags = {}
+  def fetch_tags(tags_names, fetched_tags = {})
     posts_count = 0
 
     if DEDUPLICATION
       hydra = Typhoeus::Hydra.new({:max_concurrency => 4})
       hydra.disable_memoization
-      TumblrApi.fetch_tags(tags_names) do |values|
-        if post = create_post(values, fetched_tags)
+      TumblrApi.fetch_tags(ENV['consumer_key'], tags_names) do |values|
+        if (post = create_post(values, fetched_tags))
           posts_count += 1
           if post.img_url
             hydra.queue create_deduplication_request(post)
@@ -279,7 +279,7 @@ class TumblrMachine< Sinatra::Base
       end
       hydra.run
     else
-      TumblrApi.fetch_tags(tags_names) do |values|
+      TumblrApi.fetch_tags(ENV['consumer_key'], tags_names) do |values|
         if create_post(values, fetched_tags)
           posts_count += 1
         end
@@ -294,7 +294,7 @@ class TumblrMachine< Sinatra::Base
   # Create the request to manage deduplication
   # post:: the post we do the stuff for
   # return the Request
-  def create_deduplication_request post
+  def create_deduplication_request(post)
     request = Typhoeus::Request.new post.img_url
     request.on_complete do |response|
       if response.code == 200
@@ -326,11 +326,11 @@ class TumblrMachine< Sinatra::Base
   # values:: the values used to create the post
   # fetched_tags:: tags already fetched to be used as a cache
   # return the Post object
-  def create_post values, fetched_tags
+  def create_post(values, fetched_tags)
     unless (Post.first(:id => values[:id])) || (values[:tumblr_name] == ENV['tumblr_name'])
       post_db = Post.new
       post_db.id = values[:id]
-      if tumblr = Tumblr.first(:url => values[:tumblr_url])
+      if (tumblr = Tumblr.first(:url => values[:tumblr_url]))
         if tumblr.name != values[:tumblr_name]
           tumblr.update(:name => values[:tumblr_name])
         end
@@ -340,17 +340,21 @@ class TumblrMachine< Sinatra::Base
       post_db.tumblr = tumblr
       post_db.score = 0
       post_db.fetched = DateTime.now
-      post_db.img_url = values[:img_url]
-      post_db.height = values[:height]
-      post_db.width = values[:width]
-      unless values[:img_url]
+      post_db.reblog_key = values[:reblog_key]
+
+      if values[:img_url]
+        post_db.img_url = values[:img_url]
+        post_db.height = values[:height]
+        post_db.width = values[:width]
+      else
         post_db.skip = true
       end
+
       post_db.save
       score = 0
 
       values[:tags].each do |t|
-        if ta = fetched_tags[t] || Tag.first(:name => t)
+        if (ta = fetched_tags[t] || Tag.first(:name => t))
           score += ta.value
         else
           ta = Tag.create(:name => t, :value => 0, :fetch => false, :value => 0)
@@ -364,8 +368,10 @@ class TumblrMachine< Sinatra::Base
   end
 
   # Reblog a post
-  def reblog post
-    reblog_key = TumblrApi.reblog_key(ENV['consumer_key'], post.tumblr.name, post.id)
+  def reblog(post)
+    unless (reblog_key = post.reblog_key)
+      reblog_key = TumblrApi.reblog_key(ENV['consumer_key'], post.tumblr.name, post.id)
+    end
     TumblrApi.reblog(@access_token, ENV['tumblr_name'], post.id, reblog_key)
     post.update(:posted => true)
     Tumblr.filter(:id => post.tumblr_id).update(:last_reblogged_post => DateTime.now)

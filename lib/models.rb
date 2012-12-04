@@ -34,7 +34,7 @@ migration 'create tables' do
   end
 
   database.create_table :posts_tags do
-    foreign_key :post_id, :posts
+    foreign_key :post_id, :posts, :type => Bignum
     foreign_key :tag_id, :tags
   end
 end
@@ -96,6 +96,12 @@ migration 'create meta' do
     primary_key :id, :type => Bignum, :null => false
     Text :key, :null => false, :index => true
     Text :value, :null => false, :index => true
+  end
+end
+
+migration 'reblog_key' do
+  database.alter_table :posts do
+    add_column :reblog_key, String, :null => true, :text => true
   end
 end
 

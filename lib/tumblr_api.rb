@@ -9,46 +9,37 @@ require 'json'
 class TumblrApi
 
   # parse the javascript of the onclick property of the image to get info of the large version
-  IMAGE_SIZE_REGEX = /.*this.src='([^']*)'.*else.*width.*'(\d*)px'.*height.*'(\d*)px'.*/m
 
   # Fetch the last images posts for a list of tags
   # Call the block with the image a parameter
   # Note: the the found tags are normalized (lower case and uniq)
-  def self.fetch_tags tags_names, &block
+  def self.fetch_tags(api_key, tags_names, &block)
     hydra = Typhoeus::Hydra.new({:max_concurrency => 4})
     hydra.disable_memoization
     tags_names.each do |tag_name|
-      url = "http://www.tumblr.com/tagged/#{tag_name.sub(' ', '+')}"
+      url = "http://api.tumblr.com/v2/tagged?api_key=#{api_key}&tag=#{tag_name.sub(' ', '+')}"
       request = Typhoeus::Request.new url
       request.on_complete do |response|
         if response.code == 200
-          doc = Nokogiri::HTML(response.body)
-          doc.search('#posts > .photo').each do |item|
-            post = {}
-            post_id = item[:id]
-            post[:id] = post_id[(post_id.rindex('_') +1) .. -1].to_i
+          JSON.parse(response.body)['response'].each do |item|
+            
+            post = {
+                :id => item['id'],
+                :reblog_key => item['reblog_key'],
+                :tumblr_name => item['blog_name'],
+                :tags => (item['tags'] + [tag_name]).collect { |tag| tag.downcase }.uniq,
+                :tumblr_url => "http://#{URI.parse(item['post_url']).host}"
+            }
 
-            image = item.at('.image')
-            if image
-              # try to get the large image info from the javascript
-              if r = IMAGE_SIZE_REGEX.match(image[:onclick])
-                post[:img_url] = r[1]
-                post[:width] = r[2].to_i
-                post[:height] = r[3].to_i
-              else
-                # failed: get the info of the small image
-                post[:img_url] = image[:src]
-                post[:width] = image[:width]
-                post[:height] = image[:height]
-              end
+            if item['photos']
+              original_photo = item['photos'].first['original_size']
+              post[:img_url] = original_photo['url']
+              post[:width] = original_photo['width']
+              post[:height] = original_photo['height']
             end
 
-            post_info = item.at('.post_info a')
-            post[:tumblr_name] = post_info.content
-            post[:tumblr_url] = post_info[:href]
-
-            post[:tags] = [tag_name].concat(item.search('.tags a').collect { |tag| tag.content[1..-1].downcase }.uniq)
             block.call post
+
           end
         end
       end
