@@ -22,7 +22,7 @@ class TumblrApi
       request.on_complete do |response|
         if response.code == 200
           JSON.parse(response.body)['response'].each do |item|
-            
+
             post = {
                 :id => item['id'],
                 :reblog_key => item['reblog_key'],
@@ -59,7 +59,7 @@ class TumblrApi
 
   # Reblog a post
   # Parameters:
-  # - access_token the oath access token
+  # - access_token the oauth access token
   # - tumblr     the user tumblr
   # - post_id    the id of the post to reblog
   # - reblog_key the reblog key of the post to reblog
