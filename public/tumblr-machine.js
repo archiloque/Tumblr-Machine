@@ -1,4 +1,17 @@
 $(document).ready(function () {
+    // we resize the image widther than the screen
+    var containerWidth = $('#posts').innerWidth();
+    $('.post').each(function (index, postDom) {
+        var post = $(postDom);
+        var postWith = post.outerWidth(true);
+        if (postWith > containerWidth) {
+            var targetWidth = (containerWidth - (postWith - post.width())) + 'px';
+            post.css('width', targetWidth);
+            post.find('img').css('max-width', targetWidth);
+            post.find('.postInfo').css('max-width', targetWidth);
+        }
+    });
+
     $('#posts').compactWall($('.post'), {'maxTime':500});
 });
 
