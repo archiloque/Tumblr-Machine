@@ -12,7 +12,7 @@ $(document).ready(function () {
         }
     });
 
-    $('#posts').compactWall($('.post'), {'maxTime':500});
+    $('#posts').compactWall($('.post'), {'maxTime': 1000});
 });
 
 function editTag(name, value, fetch) {
