@@ -22,23 +22,26 @@ class TumblrApi
       request.on_complete do |response|
         if response.code == 200
           JSON.parse(response.body)['response'].each do |item|
-
-            post = {
+            begin
+              post = {
                 :id => item['id'],
                 :reblog_key => item['reblog_key'],
                 :tumblr_name => item['blog_name'],
                 :tags => (item['tags'] + [tag_name]).collect { |tag| tag.downcase }.uniq,
                 :tumblr_url => "http://#{URI.parse(item['post_url']).host}"
-            }
+              }
 
-            if item['photos']
-              original_photo = item['photos'].first['original_size']
-              post[:img_url] = original_photo['url']
-              post[:width] = original_photo['width']
-              post[:height] = original_photo['height']
+              if item['photos']
+                original_photo = item['photos'].first['original_size']
+                post[:img_url] = original_photo['url']
+                post[:width] = original_photo['width']
+                post[:height] = original_photo['height']
+              end
+
+              block.call post
+            rescue Exception => e
+              p e
             end
-
-            block.call post
 
           end
         end
@@ -66,8 +69,8 @@ class TumblrApi
   # - date       the date to post
   def self.reblog(access_token, tumblr_name, post_id, reblog_key)
     params = {
-        'id' => post_id,
-        'reblog_key' => reblog_key
+      'id' => post_id,
+      'reblog_key' => reblog_key
     }
     access_token.post("http://api.tumblr.com/v2/blog/#{tumblr_name}.tumblr.com/post/reblog", params)
   end
