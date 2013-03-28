@@ -32,10 +32,10 @@ class TumblrApi
               }
 
               if item['photos']
-                original_photo = item['photos'].first['original_size']
-                post[:img_url] = original_photo['url']
-                post[:width] = original_photo['width']
-                post[:height] = original_photo['height']
+                photo = item['photos'].first['alt_sizes'].find{|photo| photo['width'] <= 500} || item['photos'].first['original_size']
+                post[:img_url] = photo['url']
+                post[:width] = photo['width']
+                post[:height] = photo['height']
               end
 
               block.call post
