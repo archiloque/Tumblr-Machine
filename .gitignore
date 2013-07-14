@@ -1,3 +1,5 @@
 .DS_Store
 .idea
+.ruby-version
+public/stored_images
 tumblr-machine.sqlite3

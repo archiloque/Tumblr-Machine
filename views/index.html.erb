@@ -43,19 +43,19 @@
         <% posts_ids << post.id %>
         <div class="post">
           <div class="postImg">
-            <%= "<a target=\"_blank\" href=\"#{post.tumblr.url}/post/#{post.id}\">" %>
+            <%= "<a target=\"_blank\" href=\"#{post.loaded_tumblr.url}/post/#{post.id}\">" %>
             <% if post.height %>
-                <%= "<img src=\"#{post.img_url}\" height=\"#{post.height}px\" width=\"#{post.width}px\">" %>
+                <%= "<img src=\"#{post.img_saved ? "stored_images/#{post.id}#{File.extname(post.img_url)}" : post.img_url}\" height=\"#{post.height}px\" width=\"#{post.width}px\">" %>
             <% else %>
-                <%= "<img src=\"#{post.img_url}\">" %>
+                <%= "<img src=\"#{post.img_saved ? "stored_images/#{post.id}#{File.extname(post.img_url)}" : post.img_url}\">" %>
             <% end %>
             </a>
           </div>
           <div class="postInfo" style="width:<%= (post.img_url && post.width) ? post.width : 200 %>px">
             <%= "<a class=\"button\" onclick=\"reblog(#{post.id}); return false;\" title=\"Reblog\">Reblog</a>" %>
-            <%= "<a title=\"Go to blog\" target=\"_blank\" href='#{post.tumblr.url}'>#{post.tumblr.name}</a>" %>
+            <%= "<a title=\"Go to blog\" target=\"_blank\" href='#{post.loaded_tumblr.url}'>#{post.loaded_tumblr.name}</a>" %>
             –
-            <%= post.tags.collect { |t| TumblrApi.tag_to_link(t.name, ("#{t.name}#{(t.value != 0) ? "(#{t.value})" : ''}")) }.join(', ') %>
+            <%= post.loaded_tags.collect { |t| TumblrApi.tag_to_link(t.name, ("#{t.name}#{(t.value != 0) ? "(#{t.value})" : ''}")) }.join(', ') %>
           </div>
         </div>
     <% end %>
