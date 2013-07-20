@@ -353,7 +353,10 @@ class TumblrMachine< Sinatra::Base
         dest_file = File.join(STORED_IMAGES_DIR, "#{post.id}#{File.extname(post.img_url)}")
         File.open(dest_file, 'w') do |file|
           file.write response.body
-          file.close
+        end
+
+        if File.exist? dest_file
+          post.update(:img_saved => true)
 
           if DEDUPLICATION
             fingerprint = Phashion::Image.new(file.path).fingerprint
@@ -367,9 +370,6 @@ class TumblrMachine< Sinatra::Base
             end
           end
 
-        end
-        if File.exist? dest_file
-          post.update(:img_saved => true)
         end
       end
     end
