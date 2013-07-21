@@ -359,7 +359,7 @@ class TumblrMachine< Sinatra::Base
           post.update(:img_saved => true)
 
           if DEDUPLICATION
-            fingerprint = Phashion::Image.new(file.path).fingerprint
+            fingerprint = Phashion::Image.new(dest_file).fingerprint
             post.update(:fingerprint => Sequel.lit("B'#{fingerprint.to_s(2).rjust(64, '0')}'"))
             if database[:posts].
                 where('fingerprint is not null').
