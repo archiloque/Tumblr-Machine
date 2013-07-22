@@ -2,8 +2,6 @@ module Sinatra
 
   module TumblrMachineHelper
 
-    STORED_IMAGES_DIR = File.join(root, 'public/stored_images')
-
     def h(text)
       Rack::Utils.escape_html(text)
     end
@@ -14,8 +12,8 @@ module Sinatra
       end
     end
 
-    def img_src(post)
-      if post.img_saved && File.exist?(File.join(STORED_IMAGES_DIR, "#{post.id}#{File.extname(post.img_url)}"))
+    def img_src(post, stored_images_dir)
+      if post.img_saved && File.exist?(File.join(stored_images_dir, "#{post.id}#{File.extname(post.img_url)}"))
           "/stored_images/#{post.id}#{File.extname(post.img_url)}"
       else
         post.img_url

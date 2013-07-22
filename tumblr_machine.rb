@@ -130,6 +130,7 @@ class TumblrMachine < Sinatra::Base
     end
 
     headers 'Cache-Control' => 'no-cache, must-revalidate'
+    @stored_images_dir = STORED_IMAGES_DIR
     erb :'index.html'
   end
 
