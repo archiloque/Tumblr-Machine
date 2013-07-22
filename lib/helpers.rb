@@ -17,7 +17,7 @@ module Sinatra
       else
         post.img_url
       end
-
+    end
   end
 end
 
