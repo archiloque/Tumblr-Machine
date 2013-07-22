@@ -1,6 +1,9 @@
 module Sinatra
 
   module TumblrMachineHelper
+
+    STORED_IMAGES_DIR = File.join(root, 'public/stored_images')
+
     def h(text)
       Rack::Utils.escape_html(text)
     end
