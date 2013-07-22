@@ -29,7 +29,7 @@ require_relative 'lib/tumblr_api'
 
 ENV['DATABASE_URL'] ||= "sqlite://#{Dir.pwd}/tumblr-machine.sqlite3"
 
-class TumblrMachine< Sinatra::Base
+class TumblrMachine < Sinatra::Base
 
   register Sinatra::SequelExtension
 
