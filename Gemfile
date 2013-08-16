@@ -1,6 +1,8 @@
 source 'https://rubygems.org'
 
 gem 'sinatra', '~> 1.4.3'
+gem 'sinatra-contrib', '~> 1.4.0'
+gem 'yajl-ruby', '~> 1.1.0'
 gem 'sequel', '~> 4.0.0'
 gem 'sinatra-sequel', '~> 0.9.0'
 gem 'tzinfo', '~> 0.3.26'

@@ -16,9 +16,12 @@ require 'rubygems'
 require 'bundler'
 Bundler.setup
 
+require 'yajl'
+
 require 'logger'
 require 'sinatra/base'
 require 'sinatra/sequel'
+require 'sinatra/json'
 
 require 'rack-flash'
 
@@ -64,26 +67,29 @@ class TumblrMachine < Sinatra::Base
   require 'rack/openid'
   use Rack::OpenID
 
+  helpers Sinatra::JSON
+
+  set :json_encoder, Yajl::Encoder
   helpers Sinatra::TumblrMachineHelper
 
   before do
     @user_logged = session[:user]
 
     @consumer = OAuth::Consumer.new(
-        ENV['consumer_key'],
-        ENV['secret_key'],
-        {
-            :site => "http://www.tumblr.com",
-            :scheme => :header,
-            :http_method => :post,
-            :request_token_path => "/oauth/request_token",
-            :authorize_path => "/oauth/authorize"
-        })
+      ENV['consumer_key'],
+      ENV['secret_key'],
+      {
+        :site => "http://www.tumblr.com",
+        :scheme => :header,
+        :http_method => :post,
+        :request_token_path => "/oauth/request_token",
+        :authorize_path => "/oauth/authorize"
+      })
 
     if session[:access_token]
       @access_token = session[:access_token]
     elsif ((meta_access_token_token = Meta.first(:key => 'access_token_token')) &&
-        (meta_access_token_secret = Meta.first(:key => 'access_token_secret')))
+      (meta_access_token_secret = Meta.first(:key => 'access_token_secret')))
       @access_token = OAuth::AccessToken.new(@consumer, meta_access_token_token.value, meta_access_token_secret.value)
     end
   end
@@ -93,11 +99,11 @@ class TumblrMachine < Sinatra::Base
     check_logged
     @total_posts = Post.count
     @waiting_posts = Post.
-        where('skip is not ?', true).
-        where('posted = ?', false).
-        where('tumblr_id not in (?)', skippable_tumblr_ids).
-        where('score >= ?', MIN_SCORE).
-        count
+      where('skip is not ?', true).
+      where('posted = ?', false).
+      where('tumblr_id not in (?)', skippable_tumblr_ids).
+      where('score >= ?', MIN_SCORE).
+      count
     @posts = next_posts().limit(100).to_a
 
     posts_by_id = {}
@@ -107,7 +113,7 @@ class TumblrMachine < Sinatra::Base
     end
 
     tumblrs = {}
-    Tumblr.where(:id => @posts.collect{|post| post.tumblr_id}).each do |tumblr|
+    Tumblr.where(:id => @posts.collect { |post| post.tumblr_id }).each do |tumblr|
       tumblrs[tumblr.id] = tumblr
     end
     @posts.each do |post|
@@ -126,7 +132,7 @@ class TumblrMachine < Sinatra::Base
     end
 
     @posts.each do |post|
-      post.loaded_tags = post.loaded_tags.collect{|tag| tags_by_id[tag]}.sort{|tag1, tag2| tag1.name <=> tag2.name}
+      post.loaded_tags = post.loaded_tags.collect { |tag| tags_by_id[tag] }.sort { |tag1, tag2| tag1.name <=> tag2.name }
     end
 
     headers 'Cache-Control' => 'no-cache, must-revalidate'
@@ -137,23 +143,22 @@ class TumblrMachine < Sinatra::Base
   get '/tags' do
     check_logged
     @tags = database['select tags.name as n, tags.fetch as f, tags.last_fetch as l, tags.value as v, count(posts_tags.post_id) as c ' +
-                         'from tags left join posts_tags on tags.id = posts_tags.tag_id ' +
-                         'where tags.value != 0 or tags.fetch = ? ' +
-                         'group by tags.name, tags.fetch, tags.last_fetch, tags.value ' +
-                         'order by tags.fetch desc, tags.value desc, c desc, tags.name asc', true]
+                       'from tags left join posts_tags on tags.id = posts_tags.tag_id ' +
+                       'where tags.value != 0 or tags.fetch = ? ' +
+                       'group by tags.name, tags.fetch, tags.last_fetch, tags.value ' +
+                       'order by tags.fetch desc, tags.value desc, c desc, tags.name asc', true]
     headers 'Cache-Control' => 'no-cache, must-revalidate'
     erb :'tags.html'
   end
 
-  # reblog the next post
   get '/other_tags' do
     check_logged_ajax
 
     @tags = database['select tags.name as n, count(posts_tags.post_id) as c ' +
-                         'from tags left join posts_tags on tags.id = posts_tags.tag_id ' +
-                         'where tags.value = 0 and tags.fetch = ? ' +
-                         'group by tags.name ' +
-                         'order by c desc, tags.name asc', false]
+                       'from tags left join posts_tags on tags.id = posts_tags.tag_id ' +
+                       'where tags.value = 0 and tags.fetch = ? ' +
+                       'group by tags.name ' +
+                       'order by c desc, tags.name asc', false]
     erb :'other_tags.html'
   end
 
@@ -192,7 +197,7 @@ class TumblrMachine < Sinatra::Base
 
         if delta != 0
           Post.where('posts.id in (select posts_tags.post_id from posts_tags where posts_tags.tag_id = ?)', tag.id).
-              update(:score => :score + delta)
+            update(:score => :score + delta)
         end
         flash[:notice] = 'Tag updated'
       else
@@ -258,9 +263,9 @@ class TumblrMachine < Sinatra::Base
   post '/skip_unposted' do
     check_logged
     Post.where(:id => params[:posts].split(',').collect { |i| i.to_i }).
-        where(:skip => nil).
-        where(:posted => false).
-        update({:skip => true})
+      where(:skip => nil).
+      where(:posted => false).
+      update({:skip => true})
     redirect '/'
   end
 
@@ -269,13 +274,13 @@ class TumblrMachine < Sinatra::Base
     check_logged_ajax
 
     post = Post.
-        where(:id => params[:id]).
-        first
+      where(:id => params[:id]).
+      first
     if post
       reblog post
       "Posted #{post.tumblr.url}/post/#{post.id}"
     else
-      "Post not found"
+      [404, 'Post not found']
     end
   end
 
@@ -300,7 +305,7 @@ class TumblrMachine < Sinatra::Base
       File.unlink(existing_file)
     end
 
-    flash[:notice] = "Cleaning done"
+    flash[:notice] = 'Cleaning done'
     redirect '/'
   end
 
@@ -314,7 +319,79 @@ class TumblrMachine < Sinatra::Base
     check_logged_ajax
 
     database.run "update posts set score = (select sum(tags.value) from tags where tags.id in (select posts_tags.tag_id from posts_tags where posts_tags.post_id = posts.id))"
-    "OK"
+    'OK'
+  end
+
+  if ENV['api_key'] && (!ENV['api_key'].empty?)
+    get "/api/#{ENV['api_key']}" do
+
+      posts = next_posts().to_a
+
+      posts_by_id = {}
+      posts.each do |post|
+        posts_by_id[post.id] = post
+        post.loaded_tags = []
+      end
+
+      tumblrs = {}
+      Tumblr.where(:id => posts.collect { |post| post.tumblr_id }).each do |tumblr|
+        tumblrs[tumblr.id] = tumblr
+      end
+
+      tags_id = Set.new
+      database['select posts_tags.post_id as post_id, posts_tags.tag_id as tag_id from posts_tags where posts_tags.post_id in ?', posts_by_id.keys].each do |result_line|
+        tags_id << result_line[:tag_id]
+        posts_by_id[result_line[:post_id]].loaded_tags << result_line[:tag_id]
+      end
+
+      tags_by_id = {}
+      Tag.where(:id => tags_id.to_a).each do |tag|
+        tags_by_id[tag.id] = tag
+      end
+
+      posts_result = posts.collect do |post|
+        post_tags = {}
+        post.loaded_tags.each do |tag_id|
+          tag = tags_by_id[tag_id]
+          post_tags[tag.name] = tag.value
+        end
+        {
+          :id => post.id.to_s,
+          :href => "#{tumblrs[post.tumblr_id].url}/post/#{post.id}",
+          :image_url => post.img_url,
+          :score => post.score,
+          :timestamp => post.fetched,
+          :tags => post_tags,
+          :height => post.height,
+          :width => post.width
+        }
+      end
+
+      headers 'Cache-Control' => 'no-cache, must-revalidate'
+      json :data => posts_result.to_a
+
+    end
+
+    post "/api/#{ENV['api_key']}/skip_unposted" do
+      Post.where(:id => params[:posts].split(',').collect { |i| i.to_i }).
+        where(:skip => nil).
+        where(:posted => false).
+        update({:skip => true})
+      [204, 'OK']
+    end
+
+    post "/api/#{ENV['api_key']}/reblog/:id" do
+      post = Post.
+        where(:id => params[:id]).
+        first
+      if post
+        reblog post
+        [204, "Posted #{post.tumblr.url}/post/#{post.id}"]
+      else
+        [404, 'Post not found']
+      end
+    end
+
   end
 
   private
@@ -363,10 +440,10 @@ class TumblrMachine < Sinatra::Base
             fingerprint = Phashion::Image.new(dest_file).fingerprint
             post.update(:fingerprint => Sequel.lit("B'#{fingerprint.to_s(2).rjust(64, '0')}'"))
             if database[:posts].
-                where('fingerprint is not null').
-                where('id != ?', post.id).
-                where('hamming(fingerprint, (select fingerprint from posts where id = ?)) >= ?', post.id, DUPLICATE_LEVEL).
-                count > 0
+              where('fingerprint is not null').
+              where('id != ?', post.id).
+              where('hamming(fingerprint, (select fingerprint from posts where id = ?)) >= ?', post.id, DUPLICATE_LEVEL).
+              count > 0
               post.update(:skip => true)
             end
           end
@@ -430,23 +507,23 @@ class TumblrMachine < Sinatra::Base
     TumblrApi.reblog(@access_token, ENV['tumblr_name'], post.id, reblog_key)
     post.update(:posted => true)
     Tumblr.
-        where(:id => post.tumblr_id).
-        update(:last_reblogged_post => DateTime.now)
+      where(:id => post.tumblr_id).
+      update(:last_reblogged_post => DateTime.now)
   end
 
   # Finder for the next posts
   def next_posts
     Post.
-        where('skip is not ?', true).
-        where(:posted => false).
-        where('tumblr_id not in (?)', skippable_tumblr_ids).
-        order(Sequel.desc(:score), Sequel.desc(:fetched))
+      where('skip is not ?', true).
+      where(:posted => false).
+      where('tumblr_id not in (?)', skippable_tumblr_ids).
+      order(Sequel.desc(:score), Sequel.desc(:fetched))
   end
 
   def skippable_tumblr_ids
     Tumblr.
-        select(:id).
-        where('tumblrs.last_reblogged_post is not null and tumblrs.last_reblogged_post > ?', (DateTime.now << 1))
+      select(:id).
+      where('tumblrs.last_reblogged_post is not null and tumblrs.last_reblogged_post > ?', (DateTime.now << 1))
   end
 
 end
