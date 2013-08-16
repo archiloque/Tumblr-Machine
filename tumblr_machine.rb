@@ -325,7 +325,11 @@ class TumblrMachine < Sinatra::Base
   if ENV['api_key'] && (!ENV['api_key'].empty?)
     get "/api/#{ENV['api_key']}" do
 
-      posts = next_posts().to_a
+      posts = Post.
+        where('skip is not ?', true).
+        where('posted = ?', false).
+        where('tumblr_id not in (?)', skippable_tumblr_ids).
+        where('score >= ?', MIN_SCORE).to_a
 
       posts_by_id = {}
       posts.each do |post|
@@ -339,7 +343,7 @@ class TumblrMachine < Sinatra::Base
       end
 
       tags_id = Set.new
-      posts_by_id.keys.each_slice(100) do |posts_ids_slices|
+      posts_by_id.keys.each_slice(1000) do |posts_ids_slices|
         database['select posts_tags.post_id as post_id, posts_tags.tag_id as tag_id from posts_tags where posts_tags.post_id in ?', posts_ids_slices].each do |result_line|
           tags_id << result_line[:tag_id]
           posts_by_id[result_line[:post_id]].loaded_tags << result_line[:tag_id]
