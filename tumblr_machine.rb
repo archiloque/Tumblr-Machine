@@ -339,14 +339,18 @@ class TumblrMachine < Sinatra::Base
       end
 
       tags_id = Set.new
-      database['select posts_tags.post_id as post_id, posts_tags.tag_id as tag_id from posts_tags where posts_tags.post_id in ?', posts_by_id.keys].each do |result_line|
-        tags_id << result_line[:tag_id]
-        posts_by_id[result_line[:post_id]].loaded_tags << result_line[:tag_id]
+      posts_by_id.keys.each_slice(100) do |posts_ids_slices|
+        database['select posts_tags.post_id as post_id, posts_tags.tag_id as tag_id from posts_tags where posts_tags.post_id in ?', posts_ids_slices].each do |result_line|
+          tags_id << result_line[:tag_id]
+          posts_by_id[result_line[:post_id]].loaded_tags << result_line[:tag_id]
+        end
       end
 
       tags_by_id = {}
-      Tag.where(:id => tags_id.to_a).each do |tag|
-        tags_by_id[tag.id] = tag
+      tags_id.to_a.each_slice(1000) do |tags_ids_slices|
+        Tag.where(:id => tags_ids_slices).each do |tag|
+          tags_by_id[tag.id] = tag
+        end
       end
 
       posts_result = posts.collect do |post|
