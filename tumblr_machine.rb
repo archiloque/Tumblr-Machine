@@ -363,8 +363,11 @@ class TumblrMachine < Sinatra::Base
           tag = tags_by_id[tag_id]
           post_tags[tag.name] = tag.value
         end
+        tumblr = tumblrs[post.tumblr_id]
         {
           :id => post.id.to_s,
+          :tumblr_name => tumblr.url,
+          :tumblr_url => tumblr.url,
           :href => "#{tumblrs[post.tumblr_id].url}/post/#{post.id}",
           :image_url => post.img_url,
           :score => post.score,
