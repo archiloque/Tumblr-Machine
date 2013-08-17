@@ -366,7 +366,7 @@ class TumblrMachine < Sinatra::Base
         tumblr = tumblrs[post.tumblr_id]
         {
           :id => post.id.to_s,
-          :tumblr_name => tumblr.url,
+          :tumblr_name => tumblr.name,
           :tumblr_url => tumblr.url,
           :href => "#{tumblrs[post.tumblr_id].url}/post/#{post.id}",
           :image_url => post.img_url,
