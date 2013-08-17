@@ -368,7 +368,7 @@ class TumblrMachine < Sinatra::Base
           :href => "#{tumblrs[post.tumblr_id].url}/post/#{post.id}",
           :image_url => post.img_url,
           :score => post.score,
-          :timestamp => post.fetched,
+          :timestamp => post.fetched.to_datetime,
           :tags => post_tags,
           :height => post.height,
           :width => post.width
