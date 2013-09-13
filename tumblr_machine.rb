@@ -197,7 +197,7 @@ class TumblrMachine < Sinatra::Base
 
         if delta != 0
           Post.where('posts.id in (select posts_tags.post_id from posts_tags where posts_tags.tag_id = ?)', tag.id).
-            update(:score => :score + delta)
+            update(:score => value)
         end
         flash[:notice] = 'Tag updated'
       else
