@@ -8,6 +8,9 @@ Can process the linked images to eliminates duplicates (see bellow).
 
 Code should be easy to hack on, contact me for any question.
 
+I'm using an {ssl client certificate}[http://en.wikipedia.org/wiki/Transport_Layer_Security#Client-authenticated_TLS_handshake]
+for authentication which requires some configuration on the frontal nginx / apache.
+
 # Instructions
 
 - deploy the application on your server
@@ -20,9 +23,9 @@ Code should be easy to hack on, contact me for any question.
 
 - consumer_key : the application OAuth consumer key
 - secret_key : the application OAuth secret key
-- tumblr_name your tumblr's name
-- openid_uri the openid uri for authentication
-- DATABASE_URL database url, syntax is described [here](http://sequel.rubyforge.org/rdoc/files/doc/opening_databases_rdoc.html), remember to add the required database gem
+- tumblr_name : your tumblr's name
+- http_x_ssl_issuer : the SSL issuer of your client certificate
+- DATABASE_URL : database url, syntax is described [here](http://sequel.rubyforge.org/rdoc/files/doc/opening_databases_rdoc.html), remember to add the required database gem
 - deduplication: enable image deduplication through the [Phashion](https://github.com/mperham/phashion) gem, requires GraphicsMagick or ImageMagick and a database with the hamming function (to calculate similarity between images). The current code works with PostgreSQl and requires installing the [pg_similarity](http://pgsimilarity.projects.postgresql.org/) package.
 - api_key : an api key for clients
 
@@ -30,7 +33,7 @@ Code should be easy to hack on, contact me for any question.
 
 Except files with their own copyright license:
 
-Copyright (c) 2011, Julien Kirch
+Copyright (c) 2011 - 2013, Julien Kirch
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the

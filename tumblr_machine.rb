@@ -1,4 +1,4 @@
-['consumer_key', 'secret_key', 'tumblr_name', 'openid_uri'].each do |p|
+['consumer_key', 'secret_key', 'tumblr_name', 'http_x_ssl_issuer'].each do |p|
   unless ENV.include? p
     raise "Missing #{p} environment variable"
   end
@@ -63,9 +63,6 @@ class TumblrMachine < Sinatra::Base
 
   require_relative 'lib/models'
   require_relative 'lib/helpers'
-
-  require 'rack/openid'
-  use Rack::OpenID
 
   helpers Sinatra::JSON
 
