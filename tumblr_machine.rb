@@ -319,87 +319,88 @@ class TumblrMachine < Sinatra::Base
     'OK'
   end
 
-  if ENV['api_key'] && (!ENV['api_key'].empty?)
-    get "/api/#{ENV['api_key']}" do
+  get "/api" do
+    check_logged
 
-      posts = Post.
-        where('skip is not ?', true).
-        where('posted = ?', false).
-        where('tumblr_id not in (?)', skippable_tumblr_ids).
-        where('score >= ?', MIN_SCORE).to_a
+    posts = Post.
+      where('skip is not ?', true).
+      where('posted = ?', false).
+      where('tumblr_id not in (?)', skippable_tumblr_ids).
+      where('score >= ?', MIN_SCORE).to_a
 
-      posts_by_id = {}
-      posts.each do |post|
-        posts_by_id[post.id] = post
-        post.loaded_tags = []
-      end
-
-      tumblrs = {}
-      Tumblr.where(:id => posts.collect { |post| post.tumblr_id }).each do |tumblr|
-        tumblrs[tumblr.id] = tumblr
-      end
-
-      tags_id = Set.new
-      posts_by_id.keys.each_slice(1000) do |posts_ids_slices|
-        database['select posts_tags.post_id as post_id, posts_tags.tag_id as tag_id from posts_tags where posts_tags.post_id in ?', posts_ids_slices].each do |result_line|
-          tags_id << result_line[:tag_id]
-          posts_by_id[result_line[:post_id]].loaded_tags << result_line[:tag_id]
-        end
-      end
-
-      tags_by_id = {}
-      tags_id.to_a.each_slice(1000) do |tags_ids_slices|
-        Tag.where(:id => tags_ids_slices).each do |tag|
-          tags_by_id[tag.id] = tag
-        end
-      end
-
-      posts_result = posts.collect do |post|
-        post_tags = {}
-        post.loaded_tags.each do |tag_id|
-          tag = tags_by_id[tag_id]
-          post_tags[tag.name] = tag.value
-        end
-        tumblr = tumblrs[post.tumblr_id]
-        {
-          :id => post.id.to_s,
-          :tumblr_name => tumblr.name,
-          :tumblr_url => tumblr.url,
-          :href => "#{tumblrs[post.tumblr_id].url}/post/#{post.id}",
-          :image_url => post.img_url,
-          :score => post.score,
-          :timestamp => post.fetched.to_datetime,
-          :tags => post_tags,
-          :height => post.height,
-          :width => post.width
-        }
-      end
-
-      headers 'Cache-Control' => 'no-cache, must-revalidate'
-      json :data => posts_result.to_a
-
+    posts_by_id = {}
+    posts.each do |post|
+      posts_by_id[post.id] = post
+      post.loaded_tags = []
     end
 
-    post "/api/#{ENV['api_key']}/skip_unposted" do
-      Post.where(:id => params[:posts].split(',').collect { |i| i.to_i }).
-        where(:skip => nil).
-        where(:posted => false).
-        update({:skip => true})
-      [204, 'OK']
+    tumblrs = {}
+    Tumblr.where(:id => posts.collect { |post| post.tumblr_id }).each do |tumblr|
+      tumblrs[tumblr.id] = tumblr
     end
 
-    post "/api/#{ENV['api_key']}/reblog/:id" do
-      post = Post.
-        where(:id => params[:id]).
-        first
-      if post
-        reblog post
-        [204, "Posted #{post.tumblr.url}/post/#{post.id}"]
-      else
-        [404, 'Post not found']
+    tags_id = Set.new
+    posts_by_id.keys.each_slice(1000) do |posts_ids_slices|
+      database['select posts_tags.post_id as post_id, posts_tags.tag_id as tag_id from posts_tags where posts_tags.post_id in ?', posts_ids_slices].each do |result_line|
+        tags_id << result_line[:tag_id]
+        posts_by_id[result_line[:post_id]].loaded_tags << result_line[:tag_id]
       end
     end
 
+    tags_by_id = {}
+    tags_id.to_a.each_slice(1000) do |tags_ids_slices|
+      Tag.where(:id => tags_ids_slices).each do |tag|
+        tags_by_id[tag.id] = tag
+      end
+    end
+
+    posts_result = posts.collect do |post|
+      post_tags = {}
+      post.loaded_tags.each do |tag_id|
+        tag = tags_by_id[tag_id]
+        post_tags[tag.name] = tag.value
+      end
+      tumblr = tumblrs[post.tumblr_id]
+      {
+        :id => post.id.to_s,
+        :tumblr_name => tumblr.name,
+        :tumblr_url => tumblr.url,
+        :href => "#{tumblrs[post.tumblr_id].url}/post/#{post.id}",
+        :image_url => post.img_url,
+        :score => post.score,
+        :timestamp => post.fetched.to_datetime,
+        :tags => post_tags,
+        :height => post.height,
+        :width => post.width
+      }
+    end
+
+    headers 'Cache-Control' => 'no-cache, must-revalidate'
+    json :data => posts_result.to_a
+  end
+
+  post "/api/skip_unposted" do
+    check_logged
+
+    Post.where(:id => params[:posts].split(',').collect { |i| i.to_i }).
+      where(:skip => nil).
+      where(:posted => false).
+      update({:skip => true})
+    [204, 'OK']
+  end
+
+  post "/api/reblog/:id" do
+    check_logged
+
+    post = Post.
+      where(:id => params[:id]).
+      first
+    if post
+      reblog post
+      [204, "Posted #{post.tumblr.url}/post/#{post.id}"]
+    else
+      [404, 'Post not found']
+    end
   end
 
   private
