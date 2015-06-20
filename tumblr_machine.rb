@@ -21,7 +21,6 @@ require 'yajl'
 require 'logger'
 require 'sinatra/base'
 require 'sinatra/sequel'
-require 'sinatra/json'
 
 require 'rack-flash'
 
@@ -64,9 +63,14 @@ class TumblrMachine < Sinatra::Base
   require_relative 'lib/models'
   require_relative 'lib/helpers'
 
-  helpers Sinatra::JSON
+  # Return a result as a json message
+  # @param code [Integer] the result code
+  # @param message [String] the content message
+  def json(code, message)
+    content_type :json
+    halt code,  Yajl::Encoder.encode(message)
+  end
 
-  set :json_encoder, Yajl::Encoder
   helpers Sinatra::TumblrMachineHelper
 
   before do
@@ -498,7 +502,7 @@ class TumblrMachine < Sinatra::Base
         if (ta = fetched_tags[t] || Tag.first(:name => t))
           score += ta.value
         else
-          ta = Tag.create(:name => t, :value => 0, :fetch => false, :value => 0)
+          ta = Tag.create({:name => t, :fetch => false, :value => 0})
           fetched_tags[t] = ta
         end
         post_db.add_tag ta

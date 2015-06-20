@@ -1,20 +1,13 @@
 source 'https://rubygems.org'
 
 gem 'sinatra', '~> 1.4.3'
-gem 'sinatra-contrib', '~> 1.4.0'
-gem 'yajl-ruby', '~> 1.1.0'
-gem 'sequel', '~> 4.0.0'
+gem 'yajl-ruby', '~> 1.2.1'
+gem 'sequel', '~> 4.23.0'
 gem 'sinatra-sequel', '~> 0.9.0'
-gem 'tzinfo', '~> 0.3.26'
+gem 'tzinfo', '~> 1.2.2'
 gem 'nokogiri', '~> 1.6.0'
 gem 'rack-flash3', '~> 1.0.3'
-gem 'typhoeus', '~> 0.4.2'
-gem 'phashion', '~> 1.0.6'
+gem 'typhoeus', '~> 0.7.2'
+gem 'phashion', '~> 1.1.1'
 gem 'oauth', '~> 0.4.7'
-
-group :development do
-  gem 'sqlite3'
-end
-group :production do
-  gem 'pg'
-end
+gem 'pg'
