@@ -1,7 +1,7 @@
+require 'addressable/uri'
 require 'nokogiri'
 require 'open-uri'
 require 'net/http'
-require 'uri'
 require 'typhoeus'
 require 'json'
 
@@ -28,7 +28,7 @@ class TumblrApi
                 :reblog_key => item['reblog_key'],
                 :tumblr_name => item['blog_name'],
                 :tags => (item['tags'] + [tag_name]).collect { |tag| tag.downcase }.uniq,
-                :tumblr_url => "http://#{URI.parse(item['post_url']).host}"
+                :tumblr_url => "http://#{Addressable::URI.parse(item['post_url']).host}"
               }
 
               if item['photos']
