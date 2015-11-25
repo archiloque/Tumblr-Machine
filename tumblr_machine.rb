@@ -105,7 +105,7 @@ class TumblrMachine < Sinatra::Base
       where('tumblr_id not in (?)', skippable_tumblr_ids).
       where('score >= ?', MIN_SCORE).
       count
-    @posts = next_posts().limit(100).to_a
+    @posts = next_posts().limit(500).to_a
 
     posts_by_id = {}
     @posts.each do |post|
