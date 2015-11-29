@@ -15,7 +15,6 @@ class TumblrApi
   # Note: the the found tags are normalized (lower case and uniq)
   def self.fetch_tags(api_key, tags_names, &block)
     hydra = Typhoeus::Hydra.new({:max_concurrency => 4})
-    hydra.disable_memoization
     tags_names.each do |tag_name|
       url = "http://api.tumblr.com/v2/tagged?api_key=#{api_key}&tag=#{tag_name.sub(' ', '+')}"
       request = Typhoeus::Request.new url
@@ -24,15 +23,15 @@ class TumblrApi
           JSON.parse(response.body)['response'].each do |item|
             begin
               post = {
-                :id => item['id'],
-                :reblog_key => item['reblog_key'],
-                :tumblr_name => item['blog_name'],
-                :tags => (item['tags'] + [tag_name]).collect { |tag| tag.downcase }.uniq,
-                :tumblr_url => "http://#{Addressable::URI.parse(item['post_url']).host}"
+                  :id => item['id'],
+                  :reblog_key => item['reblog_key'],
+                  :tumblr_name => item['blog_name'],
+                  :tags => (item['tags'] + [tag_name]).collect { |tag| tag.downcase }.uniq,
+                  :tumblr_url => "http://#{Addressable::URI.parse(item['post_url']).host}"
               }
 
               if item['photos']
-                photo = item['photos'].first['alt_sizes'].find{|photo| photo['width'] <= 500} || item['photos'].first['original_size']
+                photo = item['photos'].first['alt_sizes'].find { |photo| photo['width'] <= 500 } || item['photos'].first['original_size']
                 post[:img_url] = photo['url']
                 post[:width] = photo['width']
                 post[:height] = photo['height']
@@ -69,8 +68,8 @@ class TumblrApi
   # - date       the date to post
   def self.reblog(access_token, tumblr_name, post_id, reblog_key)
     params = {
-      'id' => post_id,
-      'reblog_key' => reblog_key
+        'id' => post_id,
+        'reblog_key' => reblog_key
     }
     access_token.post("http://api.tumblr.com/v2/blog/#{tumblr_name}.tumblr.com/post/reblog", params)
   end
