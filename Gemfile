@@ -12,3 +12,7 @@ gem 'typhoeus', '~> 0.8.0'
 gem 'phashion', '~> 1.1.1'
 gem 'oauth', '~> 0.4.7'
 gem 'pg'
+group :production do
+  gem 'foreman'
+  gem 'unicorn'
+end
