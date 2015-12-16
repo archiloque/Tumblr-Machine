@@ -4,6 +4,7 @@ require 'open-uri'
 require 'net/http'
 require 'typhoeus'
 require 'json'
+require 'thread'
 
 # Api to communicate with Tumblr
 class TumblrApi
@@ -14,6 +15,8 @@ class TumblrApi
   # Call the block with the image a parameter
   # Note: the the found tags are normalized (lower case and uniq)
   def self.fetch_tags(api_key, tags_names, &block)
+    semaphore = Mutex.new
+    posts = []
     hydra = Typhoeus::Hydra.new({:max_concurrency => 4})
     tags_names.each do |tag_name|
       url = "http://api.tumblr.com/v2/tagged?api_key=#{api_key}&tag=#{tag_name.sub(' ', '+')}"
@@ -36,18 +39,22 @@ class TumblrApi
                 post[:width] = photo['width']
                 post[:height] = photo['height']
               end
-
-              block.call post
+              semaphore.synchronize do
+                posts << post
+              end
             rescue Exception => e
               p e
             end
-
           end
         end
       end
       hydra.queue request
     end
     hydra.run
+    
+    posts.each do |post|
+      block.call post
+    end
   end
 
   # Get the reblog key of a post to be able to reblog it
