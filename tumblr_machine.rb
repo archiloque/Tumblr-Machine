@@ -291,9 +291,25 @@ class TumblrMachine < Sinatra::Base
   post '/clean' do
     check_logged
 
-    Post.where('fetched < ?', (DateTime.now - 15)).destroy
-    Tumblr.where('id not in (select distinct(tumblr_id) from posts)').where('last_reblogged_post < ?', (DateTime.now << 1)).delete
-    Tag.where(:fetch => false, :value => 0).where('id not in (select distinct(tag_id) from posts_tags)').delete
+    database.transaction do
+      Post.
+          where('fetched < ?', (DateTime.now - 15)).
+          destroy
+    end
+
+    database.transaction do
+      Tumblr.
+          where('id not in (select distinct(tumblr_id) from posts)').
+          where('last_reblogged_post < ?', (DateTime.now << 1)).
+          delete
+    end
+
+    database.transaction do
+      Tag.
+          where(:fetch => false, :value => 0).
+          where('id not in (select distinct(tag_id) from posts_tags)').
+          delete
+    end
 
     existing_files = {}
     Dir[File.join(STORED_IMAGES_DIR, '*.*')].each do |image_file|
