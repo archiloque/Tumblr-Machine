@@ -16,9 +16,9 @@ class TumblrMachine
 
   def create_or_update_meta(key, value)
     if Meta.where({:key => key}).exists
-      Post.where({:key => value}).update({:value => value})
+      Meta.where({:key => value}).update({:value => value})
     else
-      Meta.create(:key => key, :value => value)
+      Meta.create({:key => key, :value => value})
     end
   end
 
