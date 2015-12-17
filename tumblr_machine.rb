@@ -291,11 +291,9 @@ class TumblrMachine < Sinatra::Base
   post '/clean' do
     check_logged
 
-    database.transaction do
-      Post.
-          where('fetched < ?', (DateTime.now - 15)).
-          destroy
-    end
+    Post.
+        where('fetched < ?', (DateTime.now - 15)).
+        destroy(:transaction => true)
 
     database.transaction do
       Tumblr.
