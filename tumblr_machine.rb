@@ -426,9 +426,9 @@ class TumblrMachine < Sinatra::Base
   private
 
   # Fetch a tag.
-  # Parameters:
-  # - tags_names the tags names
-  # - hash of fetched_tags tags already fetched indexed by their names
+  # @param tags_names [Array<String>] the tags names
+  # @param fetched_tags [Hash<String, Tag>] of fetched_tags tags already fetched indexed by their names
+  # @return [Integer] the number of fetched posts
   def fetch_tags(tags_names, fetched_tags = {})
     posts_count = 0
 
@@ -443,7 +443,9 @@ class TumblrMachine < Sinatra::Base
     end
     hydra.run
 
-    Tag.where(:name => tags_names).update(:last_fetch => DateTime.now)
+    database.transaction do
+      Tag.where(:name => tags_names).update(:last_fetch => DateTime.now)
+    end
     posts_count
   end
 
@@ -483,9 +485,9 @@ class TumblrMachine < Sinatra::Base
   end
 
   # Create a post if it does not exist
-  # values:: the values used to create the post
-  # fetched_tags:: tags already fetched to be used as a cache
-  # return the Post object
+  # @param values [Hash] the values used to create the post
+  # @fetched_tags [Hash<String, Tag>] tags already fetched to be used as a cache
+  # @return [Post] the Post object
   def create_post(values, fetched_tags)
     unless (Post.first(:id => values[:id])) || (values[:tumblr_name] == ENV['tumblr_name'])
       database.transaction do
@@ -512,19 +514,21 @@ class TumblrMachine < Sinatra::Base
         end
 
         post_db.save
-        score = 0
 
-        values[:tags].each do |t|
-          if (ta = fetched_tags[t])
-            score += ta.value
-          elsif (ta = Tag.first(:name => t))
-            score += ta.value
+        score = 0
+        values[:tags].each do |tag_name|
+          if (tag = fetched_tags[tag_name])
+            score += tag.value
+          elsif (tag = Tag.first(:name => tag_name))
+            fetched_tags[tag_name] = tag
+            score += tag.value
           else
-            ta = Tag.create({:name => t, :fetch => false, :value => 0})
-            fetched_tags[t] = ta
+            tag = Tag.create({:name => tag_name, :fetch => false, :value => 0})
+            fetched_tags[tag_name] = tag
           end
-          post_db.add_tag ta
+          post_db.add_tag tag
         end
+
         post_db.update({:score => score})
         post_db
       end
