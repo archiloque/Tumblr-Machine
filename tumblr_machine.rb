@@ -488,44 +488,46 @@ class TumblrMachine < Sinatra::Base
   # return the Post object
   def create_post(values, fetched_tags)
     unless (Post.first(:id => values[:id])) || (values[:tumblr_name] == ENV['tumblr_name'])
-      post_db = Post.new
-      post_db.id = values[:id]
-      if (tumblr = Tumblr.first(:url => values[:tumblr_url]))
-        if tumblr.name != values[:tumblr_name]
-          tumblr.update(:name => values[:tumblr_name])
-        end
-      else
-        tumblr = Tumblr.create(:name => values[:tumblr_name], :url => values[:tumblr_url])
-      end
-      post_db.tumblr = tumblr
-      post_db.score = 0
-      post_db.fetched = DateTime.now
-      post_db.reblog_key = values[:reblog_key]
-
-      if values[:img_url]
-        post_db.img_url = values[:img_url]
-        post_db.height = values[:height]
-        post_db.width = values[:width]
-      else
-        post_db.skip = true
-      end
-
-      post_db.save
-      score = 0
-
-      values[:tags].each do |t|
-        if (ta = fetched_tags[t])
-          score += ta.value
-        elsif (ta = Tag.first(:name => t))
-          score += ta.value
+      database.transaction do
+        post_db = Post.new
+        post_db.id = values[:id]
+        if (tumblr = Tumblr.first(:url => values[:tumblr_url]))
+          if tumblr.name != values[:tumblr_name]
+            tumblr.update(:name => values[:tumblr_name])
+          end
         else
-          ta = Tag.create({:name => t, :fetch => false, :value => 0})
-          fetched_tags[t] = ta
+          tumblr = Tumblr.create(:name => values[:tumblr_name], :url => values[:tumblr_url])
         end
-        post_db.add_tag ta
+        post_db.tumblr = tumblr
+        post_db.score = 0
+        post_db.fetched = DateTime.now
+        post_db.reblog_key = values[:reblog_key]
+
+        if values[:img_url]
+          post_db.img_url = values[:img_url]
+          post_db.height = values[:height]
+          post_db.width = values[:width]
+        else
+          post_db.skip = true
+        end
+
+        post_db.save
+        score = 0
+
+        values[:tags].each do |t|
+          if (ta = fetched_tags[t])
+            score += ta.value
+          elsif (ta = Tag.first(:name => t))
+            score += ta.value
+          else
+            ta = Tag.create({:name => t, :fetch => false, :value => 0})
+            fetched_tags[t] = ta
+          end
+          post_db.add_tag ta
+        end
+        post_db.update({:score => score})
+        post_db
       end
-      post_db.update({:score => score})
-      post_db
     end
   end
 
