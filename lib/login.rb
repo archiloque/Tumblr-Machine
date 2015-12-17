@@ -7,12 +7,20 @@ class TumblrMachine
     request_token = session[:request_token]
     @access_token = request_token.get_access_token({:oauth_verifier => params[:oauth_verifier]})
     session[:access_token] = @access_token
-    Meta.create(:key => 'access_token_token', :value => @access_token.token)
-    Meta.create(:key => 'access_token_secret', :value => @access_token.secret)
+    create_or_update_meta('access_token_token', @access_token.token)
+    create_or_update_meta('access_token_secret', @access_token.secret)
     redirect '/'
   end
 
   private
+
+  def create_or_update_meta(key, value)
+    if Meta.where({:key => key}).exists
+      Post.where({:key => value}).update({:value => value})
+    else
+      Meta.create(:key => key, :value => value)
+    end
+  end
 
   def check_logged
     if !@access_token
