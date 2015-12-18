@@ -20,6 +20,7 @@ require 'sinatra/base'
 require 'typhoeus'
 require 'phashion'
 require 'rack-flash'
+require 'sequel'
 
 Sequel::Model.raise_on_save_failure = true
 require 'erb'
