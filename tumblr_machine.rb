@@ -38,7 +38,7 @@ class TumblrMachine < Sinatra::Base
   set :views, Proc.new { File.join(root, 'views') }
 
   STORED_IMAGES_DIR = File.join(root, 'public/stored_images')
-  DATABASE = Sequel.connect(DATABASE_URL)
+  DATABASE = Sequel.connect(ENV['DATABASE_URL'])
 
   unless Dir.exists? STORED_IMAGES_DIR
     Dir.mkdir STORED_IMAGES_DIR
