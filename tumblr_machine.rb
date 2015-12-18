@@ -463,16 +463,14 @@ class TumblrMachine < Sinatra::Base
         if File.exist? dest_file
           post.update(:img_saved => true)
 
-          if DEDUPLICATION
-            fingerprint = Phashion::Image.new(dest_file).fingerprint
-            post.update(:fingerprint => Sequel.lit("B'#{fingerprint.to_s(2).rjust(64, '0')}'"))
-            if DATABASE[:posts].
-                where('fingerprint is not null').
-                where('id != ?', post.id).
-                where('hamming(fingerprint, (select fingerprint from posts where id = ?)) >= ?', post.id, DUPLICATE_LEVEL).
-                count > 0
-              post.update(:skip => true)
-            end
+          fingerprint = Phashion::Image.new(dest_file).fingerprint
+          post.update(:fingerprint => Sequel.lit("B'#{fingerprint.to_s(2).rjust(64, '0')}'"))
+          if DATABASE[:posts].
+              where('fingerprint is not null').
+              where('id != ?', post.id).
+              where('hamming(fingerprint, (select fingerprint from posts where id = ?)) >= ?', post.id, DUPLICATE_LEVEL).
+              count > 0
+            post.update(:skip => true)
           end
 
         end
