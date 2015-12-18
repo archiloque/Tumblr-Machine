@@ -4,9 +4,6 @@
   end
 end
 
-# if we enable deduplication
-DEDUPLICATION = ENV['deduplication']
-
 MIN_SCORE = 2
 
 # the level above we consider an image is a duplicate of another
@@ -20,8 +17,8 @@ require 'yajl'
 
 require 'logger'
 require 'sinatra/base'
-require 'sinatra/sequel'
-
+require 'typhoeus'
+require 'phashion'
 require 'rack-flash'
 
 Sequel::Model.raise_on_save_failure = true
@@ -33,8 +30,6 @@ ENV['DATABASE_URL'] ||= "sqlite://#{Dir.pwd}/tumblr-machine.sqlite3"
 
 class TumblrMachine < Sinatra::Base
 
-  register Sinatra::SequelExtension
-
   set :app_file, __FILE__
   set :root, File.dirname(__FILE__)
   set :static, true
@@ -42,6 +37,7 @@ class TumblrMachine < Sinatra::Base
   set :views, Proc.new { File.join(root, 'views') }
 
   STORED_IMAGES_DIR = File.join(root, 'public/stored_images')
+  DATABASE = Sequel.connect(DATABASE_URL)
 
   unless Dir.exists? STORED_IMAGES_DIR
     Dir.mkdir STORED_IMAGES_DIR
@@ -52,7 +48,7 @@ class TumblrMachine < Sinatra::Base
 
   configure :development do
     set :logging, true
-    database.loggers << Logger.new(STDOUT)
+    DATABASE.loggers << Logger.new(STDOUT)
   end
 
   use Rack::Session::Pool
@@ -82,11 +78,11 @@ class TumblrMachine < Sinatra::Base
         ENV['consumer_key'],
         ENV['secret_key'],
         {
-            :site => "http://www.tumblr.com",
+            :site => 'http://www.tumblr.com',
             :scheme => :header,
             :http_method => :post,
-            :request_token_path => "/oauth/request_token",
-            :authorize_path => "/oauth/authorize"
+            :request_token_path => '/oauth/request_token',
+            :authorize_path => '/oauth/authorize'
         })
 
     if session[:access_token]
@@ -124,7 +120,7 @@ class TumblrMachine < Sinatra::Base
     end
 
     tags_id = Set.new
-    database['select posts_tags.post_id as post_id, posts_tags.tag_id as tag_id from posts_tags where posts_tags.post_id in ?', posts_by_id.keys].each do |result_line|
+    DATABASE['select posts_tags.post_id as post_id, posts_tags.tag_id as tag_id from posts_tags where posts_tags.post_id in ?', posts_by_id.keys].each do |result_line|
       tags_id << result_line[:tag_id]
       posts_by_id[result_line[:post_id]].loaded_tags << result_line[:tag_id]
     end
@@ -145,7 +141,7 @@ class TumblrMachine < Sinatra::Base
 
   get '/tags' do
     check_logged
-    @tags = database['select tags.name as n, tags.fetch as f, tags.last_fetch as l, tags.value as v, count(posts_tags.post_id) as c ' +
+    @tags = DATABASE['select tags.name as n, tags.fetch as f, tags.last_fetch as l, tags.value as v, count(posts_tags.post_id) as c ' +
                          'from tags left join posts_tags on tags.id = posts_tags.tag_id ' +
                          'where tags.value != 0 or tags.fetch = ? ' +
                          'group by tags.name, tags.fetch, tags.last_fetch, tags.value ' +
@@ -157,7 +153,7 @@ class TumblrMachine < Sinatra::Base
   get '/other_tags' do
     check_logged_ajax
 
-    @tags = database['select tags.name as n, count(posts_tags.post_id) as c ' +
+    @tags = DATABASE['select tags.name as n, count(posts_tags.post_id) as c ' +
                          'from tags left join posts_tags on tags.id = posts_tags.tag_id ' +
                          'where tags.value = 0 and tags.fetch = ? ' +
                          'group by tags.name ' +
@@ -236,8 +232,8 @@ class TumblrMachine < Sinatra::Base
     end
     fetch_tags tags_names, cache
 
-    headers "Cache-Control" => "no-cache, must-revalidate"
-    "OK"
+    headers 'Cache-Control' => 'no-cache, must-revalidate'
+    'OK'
   end
 
 
@@ -295,14 +291,14 @@ class TumblrMachine < Sinatra::Base
       post.destroy(:transaction => true)
     end
 
-    database.transaction do
+    DATABASE.transaction do
       Tumblr.
           where('id not in (select distinct(tumblr_id) from posts)').
           where('last_reblogged_post < ?', (DateTime.now << 1)).
           delete
     end
 
-    database.transaction do
+    DATABASE.transaction do
       Tag.
           where(:fetch => false, :value => 0).
           where('id not in (select distinct(tag_id) from posts_tags)').
@@ -311,7 +307,7 @@ class TumblrMachine < Sinatra::Base
 
     existing_files = {}
     Dir[File.join(STORED_IMAGES_DIR, '*.*')].each do |image_file|
-      existing_files[File.basename(image_file, ".*")] = image_file
+      existing_files[File.basename(image_file, '.*')] = image_file
     end
 
     Post.where(:id => existing_files.keys).each do |existing_file|
@@ -335,11 +331,11 @@ class TumblrMachine < Sinatra::Base
   get '/recalculate_scores' do
     check_logged_ajax
 
-    database.run "update posts set score = (select sum(tags.value) from tags where tags.id in (select posts_tags.tag_id from posts_tags where posts_tags.post_id = posts.id))"
+    DATABASE.run 'update posts set score = (select sum(tags.value) from tags where tags.id in (select posts_tags.tag_id from posts_tags where posts_tags.post_id = posts.id))'
     'OK'
   end
 
-  get "/api" do
+  get '/api' do
     check_logged
 
     posts = Post.
@@ -361,7 +357,7 @@ class TumblrMachine < Sinatra::Base
 
     tags_id = Set.new
     posts_by_id.keys.each_slice(1000) do |posts_ids_slices|
-      database['select posts_tags.post_id as post_id, posts_tags.tag_id as tag_id from posts_tags where posts_tags.post_id in ?', posts_ids_slices].each do |result_line|
+      DATABASE['select posts_tags.post_id as post_id, posts_tags.tag_id as tag_id from posts_tags where posts_tags.post_id in ?', posts_ids_slices].each do |result_line|
         tags_id << result_line[:tag_id]
         posts_by_id[result_line[:post_id]].loaded_tags << result_line[:tag_id]
       end
@@ -399,7 +395,7 @@ class TumblrMachine < Sinatra::Base
     json :data => posts_result.to_a
   end
 
-  post "/api/skip_unposted" do
+  post '/api/skip_unposted' do
     check_logged
 
     Post.where(:id => params[:posts].split(',').collect { |i| i.to_i }).
@@ -409,7 +405,7 @@ class TumblrMachine < Sinatra::Base
     [204, 'OK']
   end
 
-  post "/api/reblog/:id" do
+  post '/api/reblog/:id' do
     check_logged
 
     post = Post.
@@ -443,7 +439,7 @@ class TumblrMachine < Sinatra::Base
     end
     hydra.run
 
-    database.transaction do
+    DATABASE.transaction do
       Tag.where(:name => tags_names).update(:last_fetch => DateTime.now)
     end
     posts_count
@@ -469,7 +465,7 @@ class TumblrMachine < Sinatra::Base
           if DEDUPLICATION
             fingerprint = Phashion::Image.new(dest_file).fingerprint
             post.update(:fingerprint => Sequel.lit("B'#{fingerprint.to_s(2).rjust(64, '0')}'"))
-            if database[:posts].
+            if DATABASE[:posts].
                 where('fingerprint is not null').
                 where('id != ?', post.id).
                 where('hamming(fingerprint, (select fingerprint from posts where id = ?)) >= ?', post.id, DUPLICATE_LEVEL).
@@ -490,7 +486,7 @@ class TumblrMachine < Sinatra::Base
   # @return [Post] the Post object
   def create_post(values, fetched_tags)
     unless (Post.first(:id => values[:id])) || (values[:tumblr_name] == ENV['tumblr_name'])
-      database.transaction do
+      DATABASE.transaction do
         post_db = Post.new
         post_db.id = values[:id]
         if (tumblr = Tumblr.first(:url => values[:tumblr_url]))

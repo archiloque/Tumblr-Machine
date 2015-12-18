@@ -51,7 +51,7 @@ class TumblrApi
       hydra.queue request
     end
     hydra.run
-    
+
     posts.each do |post|
       block.call post
     end
