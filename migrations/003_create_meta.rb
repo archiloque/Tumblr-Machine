@@ -6,7 +6,6 @@ Sequel.migration do
       Text :key, :null => false, :index => true
       Text :value, :null => false, :index => true
     end
+
   end
-
-
 end

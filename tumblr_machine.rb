@@ -436,36 +436,36 @@ class TumblrMachine < Sinatra::Base
     fingerprints = {}
     semaphore = Mutex.new
     found_posts.each do |found_post|
-      if (post = create_post(found_post, fetched_tags))
-        posts_count += 1
-        if post.img_url && (post.score >= MIN_SCORE)
-          hydra.queue(create_storage_request(post, fingerprints, semaphore))
+      begin
+        if (post = create_post(found_post, fetched_tags))
+          posts_count += 1
+          if post.img_url && (post.score >= MIN_SCORE)
+            hydra.queue(create_storage_request(post, fingerprints, semaphore))
+          end
         end
+      rescue Exception => e
+        p e
       end
     end
     hydra.run
 
     fingerprints.each_pair do |post_id, fingerprint|
-      DATABASE.transaction do
-        post = Post.where(:id => post_id).first
-        if fingerprint
-          post.update({:img_saved => true, :fingerprint => fingerprint})
-          unless Post.
-              where('fingerprint is not null').
-              where('id != ?', post_id).
-              where('hamming(fingerprint, (select fingerprint from posts where id = ?)) >= ?', post_id, DUPLICATE_LEVEL).
-              empty?
-            post.update({:skip => true})
-          end
-        else
-          Post.update({:img_saved => true})
+      post = Post.where(:id => post_id).first
+      if fingerprint
+        post.update({:img_saved => true, :fingerprint => fingerprint})
+        unless Post.
+            where('fingerprint is not null').
+            where('id != ?', post_id).
+            where('hamming(fingerprint, (select fingerprint from posts where id = ?)) >= ?', post_id, DUPLICATE_LEVEL).
+            empty?
+          post.update({:skip => true})
         end
+      else
+        Post.update({:img_saved => true})
       end
     end
 
-    DATABASE.transaction do
-      Tag.where(:name => tags_names).update(:last_fetch => DateTime.now)
-    end
+    Tag.where(:name => tags_names).update(:last_fetch => DateTime.now)
     posts_count
   end
 
@@ -503,10 +503,11 @@ class TumblrMachine < Sinatra::Base
   # @fetched_tags [Hash<String, Tag>] tags already fetched to be used as a cache
   # @return [Post] the Post object
   def create_post(values, fetched_tags)
-    unless (Post.first(:id => values[:id])) || (values[:tumblr_name] == ENV['tumblr_name'])
-      DATABASE.transaction do
+    DATABASE.transaction do
+      if Post.where(:id => values[:id]).empty? && (values[:tumblr_name] != ENV['tumblr_name'])
         post_db = Post.new
         post_db.id = values[:id]
+
         if (tumblr = Tumblr.first(:url => values[:tumblr_url]))
           if tumblr.name != values[:tumblr_name]
             tumblr.update(:name => values[:tumblr_name])
@@ -545,6 +546,8 @@ class TumblrMachine < Sinatra::Base
 
         post_db.update({:score => score})
         post_db
+      else
+        nil
       end
     end
   end
