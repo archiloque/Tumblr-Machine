@@ -4,16 +4,13 @@ require 'open-uri'
 require 'net/http'
 require 'typhoeus'
 require 'json'
-require 'thread'
 
 # Api to communicate with Tumblr
 class TumblrApi
 
-  # parse the javascript of the onclick property of the image to get info of the large version
-
   # Fetch the last images posts for a list of tags
-  # Call the block with the image a parameter
   # Note: the the found tags are normalized (lower case and uniq)
+  # @return [Hash] list of posts
   def self.fetch_tags(api_key, tags_names, &block)
     semaphore = Mutex.new
     posts = []
@@ -51,10 +48,7 @@ class TumblrApi
       hydra.queue request
     end
     hydra.run
-
-    posts.each do |post|
-      block.call post
-    end
+    posts
   end
 
   # Get the reblog key of a post to be able to reblog it

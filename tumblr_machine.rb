@@ -21,6 +21,7 @@ require 'typhoeus'
 require 'phashion'
 require 'rack-flash'
 require 'sequel'
+require 'thread'
 
 Sequel::Model.raise_on_save_failure = true
 require 'erb'
@@ -430,15 +431,37 @@ class TumblrMachine < Sinatra::Base
     posts_count = 0
 
     hydra = Typhoeus::Hydra.new({:max_concurrency => 2})
-    TumblrApi.fetch_tags(ENV['consumer_key'], tags_names) do |values|
-      if (post = create_post(values, fetched_tags))
+    found_posts = TumblrApi.fetch_tags(ENV['consumer_key'], tags_names)
+
+    fingerprints = {}
+    semaphore = Mutex.new
+    found_posts.each do |found_post|
+      if (post = create_post(found_post, fetched_tags))
         posts_count += 1
         if post.img_url && (post.score >= MIN_SCORE)
-          hydra.queue create_storage_request(post)
+          hydra.queue(create_storage_request(post, fingerprints, semaphore))
         end
       end
     end
     hydra.run
+
+    fingerprints.each_pair do |post_id, fingerprint|
+      DATABASE.transaction do
+        post = Post.where(:id => post_id).first
+        if fingerprint
+          post.update({:img_saved => true, :fingerprint => fingerprint})
+          unless Post.
+              where('fingerprint is not null').
+              where('id != ?', post_id).
+              where('hamming(fingerprint, (select fingerprint from posts where id = ?)) >= ?', post_id, DUPLICATE_LEVEL).
+              empty?
+            post.update({:skip => true})
+          end
+        else
+          Post.update({:img_saved => true})
+        end
+      end
+    end
 
     DATABASE.transaction do
       Tag.where(:name => tags_names).update(:last_fetch => DateTime.now)
@@ -448,9 +471,11 @@ class TumblrMachine < Sinatra::Base
 
 
   # Create the request to store an image
-  # post:: the post we do the stuff for
-  # return the Request
-  def create_storage_request(post)
+  # @params post [Post] the post we do the stuff for
+  # @param fingerprints [Hash<Integer, String>] hash to add fingerprint
+  # @params semaphore [Mutex] a mutux to synchronize
+  # @return []Typhoeus::Request} the Request to add
+  def create_storage_request(post, fingerprints, semaphore)
     request = Typhoeus::Request.new post.img_url
     request.on_complete do |response|
       if response.code == 200
@@ -460,19 +485,13 @@ class TumblrMachine < Sinatra::Base
           file.write response.body
         end
 
-        if File.exist? dest_file
-          post.update(:img_saved => true)
-
-          fingerprint = Phashion::Image.new(dest_file).fingerprint
-          post.update(:fingerprint => Sequel.lit("B'#{fingerprint.to_s(2).rjust(64, '0')}'"))
-          if DATABASE[:posts].
-              where('fingerprint is not null').
-              where('id != ?', post.id).
-              where('hamming(fingerprint, (select fingerprint from posts where id = ?)) >= ?', post.id, DUPLICATE_LEVEL).
-              count > 0
-            post.update(:skip => true)
+        semaphore.synchronize do
+          if File.exist? dest_file
+            post_fingerprint = Phashion::Image.new(dest_file).fingerprint
+            fingerprints[post.id] = Sequel.lit("B'#{post_fingerprint.to_s(2).rjust(64, '0')}'")
+          else
+            fingerprints[post.id] = nil
           end
-
         end
       end
     end
