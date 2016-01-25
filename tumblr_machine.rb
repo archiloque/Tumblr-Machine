@@ -114,9 +114,13 @@ class TumblrMachine < Sinatra::Base
 
     @posts.each do |post|
       post.loaded_tumblr = tumblrs_by_id[post.tumblr_id]
-      post.loaded_tags = post.tags.
-          sort.
-          collect { |tag| {:name => tag, :value => (tags_with_score[tag] || 0)} }
+      if post.tags
+        post.loaded_tags = post.tags.
+            sort.
+            collect { |tag| {:name => tag, :value => (tags_with_score[tag] || 0)} }
+      else
+        post.loaded_tags = []
+      end
     end
 
     headers 'Cache-Control' => 'no-cache, must-revalidate'
@@ -419,7 +423,7 @@ order by tags.fetch desc, tags.value desc, c desc, tags.name asc']
         end
 
         post_db.tags = values[:tags]
-        post_db.score = values[:tags].collect{|tag| tags_with_score[tag] || 0}.inject(0, :+)
+        post_db.score = values[:tags].collect { |tag| tags_with_score[tag] || 0 }.inject(0, :+)
         post_db.save
         post_db
       else
