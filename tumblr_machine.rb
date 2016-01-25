@@ -356,7 +356,7 @@ order by tags.fetch desc, tags.value desc, c desc, tags.name asc']
           post.update({:skip => true})
         end
       else
-        Post.update({:img_saved => true})
+        post.update({:img_saved => true})
       end
     end
 
@@ -368,7 +368,7 @@ order by tags.fetch desc, tags.value desc, c desc, tags.name asc']
   # Create the request to store an image
   # @params post [Post] the post we do the stuff for
   # @param fingerprints [Hash<Integer, String>] hash to add fingerprint
-  # @params semaphore [Mutex] a mutex to synchronize
+  # @param semaphore [Mutex] a mutex to synchronize
   # @return []Typhoeus::Request} the Request to add
   def create_storage_request(post, fingerprints, semaphore)
     request = Typhoeus::Request.new post.img_url
@@ -399,9 +399,9 @@ order by tags.fetch desc, tags.value desc, c desc, tags.name asc']
   # @return [Post] the Post object
   def create_post(values, tags_with_score)
     DATABASE.transaction do
-      if Post.where(:id => values[:id]).empty? && (values[:tumblr_name] != ENV['tumblr_name'])
+      if Post.where(:tumblr_post_id => values[:id]).empty? && (values[:tumblr_name] != ENV['tumblr_name'])
         post_db = Post.new
-        post_db.id = values[:id]
+        post_db.tumblr_post_id = values[:id]
 
         if (tumblr = Tumblr.first(:url => values[:tumblr_url]))
           if tumblr.name != values[:tumblr_name]
@@ -435,9 +435,10 @@ order by tags.fetch desc, tags.value desc, c desc, tags.name asc']
   # Reblog a post
   def reblog(post)
     unless (reblog_key = post.reblog_key)
-      reblog_key = TumblrApi.reblog_key(ENV['consumer_key'], post.tumblr.name, post.id)
+      reblog_key = TumblrApi.get_reblog_key_from_tumblr(ENV['consumer_key'], post.tumblr.name, post.tumblr_post_id)
+      post.update(:reblog_key => reblog_key)
     end
-    TumblrApi.reblog(@access_token, ENV['tumblr_name'], post.id, reblog_key)
+    TumblrApi.reblog_to_tumblr(@access_token, ENV['tumblr_name'], post.tumblr_post_id, reblog_key)
     post.update(:posted => true)
     Tumblr.
         where(:id => post.tumblr_id).

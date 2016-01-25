@@ -10,8 +10,10 @@ class TumblrApi
 
   # Fetch the last images posts for a list of tags
   # Note: the the found tags are normalized (lower case and uniq)
-  # @return [Hash] list of posts
-  def self.fetch_tags_from_tumblr(api_key, tags_names, &block)
+  # @param api_key [String] the api key
+  # @param tags_names [Array<String>] the tags names
+  # @return [Array<TumblrApi::Post>] list of posts
+  def self.fetch_tags_from_tumblr(api_key, tags_names)
     semaphore = Mutex.new
     posts = []
     hydra = Typhoeus::Hydra.new({:max_concurrency => 4})
@@ -52,33 +54,32 @@ class TumblrApi
   end
 
   # Get the reblog key of a post to be able to reblog it
-  # Parameters:
-  # - tumblr_name the name of the tumblr containing the post
-  # - post_id    the post id
-  def self.reblog_key(api_key, tumblr_name, post_id)
-    url = "http://api.tumblr.com/v2/blog/#{tumblr_name}.tumblr.com/posts/?api_key=#{api_key}&id=#{post_id}&reblog_info=true"
+  # @param api_key [String ]the api key
+  # @param tumblr_name [String] the tumblr name
+  # @param tumblr_post_id [Bignum] the post id
+  # @return [String]
+  def self.get_reblog_key_from_tumblr(api_key, tumblr_name, tumblr_post_id)
+    url = "http://api.tumblr.com/v2/blog/#{tumblr_name}.tumblr.com/posts/?api_key=#{api_key}&id=#{tumblr_post_id}&reblog_info=true"
     JSON.parse(open(url).string)['response']['posts'][0]['reblog_key']
   end
 
   # Reblog a post
-  # Parameters:
-  # - access_token the oauth access token
-  # - tumblr     the user tumblr
-  # - post_id    the id of the post to reblog
-  # - reblog_key the reblog key of the post to reblog
-  # - date       the date to post
-  def self.reblog(access_token, tumblr_name, post_id, reblog_key)
+  # @param access_token the oauth access token
+  # @param tumblr_name [String] the tumblr name
+  # @param tumblr_post_id [Bignum] the id of the post to reblog
+  # @param reblog_key [String] the reblog key of the post to reblog
+  def self.reblog_to_tumblr(access_token, tumblr_name, tumblr_post_id, reblog_key)
     params = {
-        'id' => post_id,
+        'id' => tumblr_post_id,
         'reblog_key' => reblog_key
     }
     access_token.post("http://api.tumblr.com/v2/blog/#{tumblr_name}.tumblr.com/post/reblog", params)
   end
 
   # Create a link to a tag
-  # Parameters:
-  # - tag       the tag name
-  # - link_text the link text, if null use the tag name
+  # @param tag [String] the tag
+  # @param link_text [String] the link text
+  # @return [String]
   def self.tag_to_link(tag, link_text = tag)
     "<a title='View the tag' target='_blank' href='http://www.tumblr.com/tagged/#{tag.sub(' ', '+')}'>#{link_text}</a>"
   end
