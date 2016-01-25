@@ -407,7 +407,6 @@ order by tags.fetch desc, tags.value desc, c desc, tags.name asc']
           tumblr = Tumblr.create(:name => values[:tumblr_name], :url => values[:tumblr_url])
         end
         post_db.tumblr = tumblr
-        post_db.score = 0
         post_db.fetched = DateTime.now
         post_db.reblog_key = values[:reblog_key]
 
