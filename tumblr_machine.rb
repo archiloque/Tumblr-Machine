@@ -1,7 +1,11 @@
-['consumer_key', 'secret_key', 'tumblr_name', 'http_x_ssl_issuer'].each do |p|
+['consumer_key', 'secret_key', 'tumblr_name'].each do |p|
   unless ENV.include? p
     raise "Missing #{p} environment variable"
   end
+end
+
+unless ENV.include? 'http_x_ssl_issuer'
+  p 'No http_x_ssl_issuer env variable, app will be run without authentication'
 end
 
 MIN_SCORE = 2
@@ -9,12 +13,7 @@ MIN_SCORE = 2
 # the level above we consider an image is a duplicate of another
 DUPLICATE_LEVEL = 0.8125
 
-require 'rubygems'
-require 'bundler'
-Bundler.setup
-
 require 'yajl'
-
 require 'logger'
 require 'sinatra/base'
 require 'typhoeus'
@@ -95,11 +94,10 @@ class TumblrMachine < Sinatra::Base
     end
   end
 
-  # admin
   get '/' do
     check_logged
     @total_posts = Post.count
-    @waiting_posts = Post.
+    @number_waiting_posts = Post.
         where('skip is not ?', true).
         where('posted = ?', false).
         where('tumblr_id not in (?)', skippable_tumblr_ids).
@@ -107,33 +105,18 @@ class TumblrMachine < Sinatra::Base
         count
     @posts = next_posts().limit(500).to_a
 
-    posts_by_id = {}
-    @posts.each do |post|
-      posts_by_id[post.id] = post
-      post.loaded_tags = []
-    end
+    tags_with_score = tags_with_score_in_hash
 
-    tumblrs = {}
-    Tumblr.where(:id => @posts.collect { |post| post.tumblr_id }).each do |tumblr|
-      tumblrs[tumblr.id] = tumblr
-    end
-    @posts.each do |post|
-      post.loaded_tumblr = tumblrs[post.tumblr_id]
-    end
-
-    tags_id = Set.new
-    DATABASE['select posts_tags.post_id as post_id, posts_tags.tag_id as tag_id from posts_tags where posts_tags.post_id in ?', posts_by_id.keys].each do |result_line|
-      tags_id << result_line[:tag_id]
-      posts_by_id[result_line[:post_id]].loaded_tags << result_line[:tag_id]
-    end
-
-    tags_by_id = {}
-    Tag.where(:id => tags_id.to_a).each do |tag|
-      tags_by_id[tag.id] = tag
+    tumblrs_by_id = {}
+    Tumblr.where(:id => @posts.collect { |post| post.tumblr_id }.uniq).each do |tumblr|
+      tumblrs_by_id[tumblr.id] = tumblr
     end
 
     @posts.each do |post|
-      post.loaded_tags = post.loaded_tags.collect { |tag| tags_by_id[tag] }.sort { |tag1, tag2| tag1.name <=> tag2.name }
+      post.loaded_tumblr = tumblrs_by_id[post.tumblr_id]
+      post.loaded_tags = post.tags.
+          sort.
+          collect { |tag| {:name => tag, :value => (tags_with_score[tag] || 0)} }
     end
 
     headers 'Cache-Control' => 'no-cache, must-revalidate'
@@ -143,24 +126,24 @@ class TumblrMachine < Sinatra::Base
 
   get '/tags' do
     check_logged
-    @tags = DATABASE['select tags.name as n, tags.fetch as f, tags.last_fetch as l, tags.value as v, count(posts_tags.post_id) as c ' +
-                         'from tags left join posts_tags on tags.id = posts_tags.tag_id ' +
-                         'where tags.value != 0 or tags.fetch = ? ' +
-                         'group by tags.name, tags.fetch, tags.last_fetch, tags.value ' +
-                         'order by tags.fetch desc, tags.value desc, c desc, tags.name asc', true]
+    @tags = DATABASE['select
+	tags.name as n,
+	tags.fetch as f,
+	tags.last_fetch as l,
+	tags.value as v,
+	(select count (*) from posts where tags.name=ANY(posts.tags)) as c
+from tags
+where tags.value != 0 or tags.fetch = TRUE
+order by tags.fetch desc, tags.value desc, c desc, tags.name asc']
     headers 'Cache-Control' => 'no-cache, must-revalidate'
     erb :'tags.html'
   end
 
-  get '/other_tags' do
+  get '/all_tags' do
     check_logged_ajax
 
-    @tags = DATABASE['select tags.name as n, count(posts_tags.post_id) as c ' +
-                         'from tags left join posts_tags on tags.id = posts_tags.tag_id ' +
-                         'where tags.value = 0 and tags.fetch = ? ' +
-                         'group by tags.name ' +
-                         'order by c desc, tags.name asc', false]
-    erb :'other_tags.html'
+    @tags = DATABASE['select count(*) as c, unnest(posts.tags) as n from posts group by n order by c desc, n asc']
+    erb :'all_tags.html'
   end
 
   post '/edit_tag' do
@@ -193,18 +176,17 @@ class TumblrMachine < Sinatra::Base
         tag.update(updates)
 
         if tag.fetch
-          fetch_tags [tag.name], {name => tag}
+          fetch_tags([tag.name])
         end
 
         if delta != 0
-          Post.where('posts.id in (select posts_tags.post_id from posts_tags where posts_tags.tag_id = ?)', tag.id).
-              update(:score => value)
+          recalculate
         end
         flash[:notice] = 'Tag updated'
       else
         tag = Tag.create(:name => name, :value => value, :fetch => (params[:tagFetch] || false))
         if tag.fetch
-          fetch_tags [tag.name], {name => tag}
+          fetch_tags([tag.name])
         end
         flash[:notice] = 'Tag added'
       end
@@ -218,7 +200,7 @@ class TumblrMachine < Sinatra::Base
     check_logged
 
     tag = Tag.where(:name => params[:tag_name]).first
-    posts_count = fetch_tags([tag.name], {tag.name => tag})
+    posts_count = fetch_tags([tag.name])
     flash[:notice] = "Fetched [#{params[:tag_name]}], #{posts_count} posts added"
     redirect '/'
   end
@@ -226,14 +208,11 @@ class TumblrMachine < Sinatra::Base
   # fetch next tag from external source
   get '/fetch_next_tags_external' do
     tags = Tag.where(:fetch => true).order(Sequel.asc(:last_fetch))
-    cache = {}
     tags_names = []
     tags.each do |t|
-      cache[t.name] = t
       tags_names << t.name
     end
-    fetch_tags tags_names, cache
-
+    fetch_tags(tags_names)
     headers 'Cache-Control' => 'no-cache, must-revalidate'
     'OK'
   end
@@ -244,22 +223,20 @@ class TumblrMachine < Sinatra::Base
     check_logged
 
     tags = Tag.where(:fetch => true).order(Sequel.asc(:last_fetch))
-    cache = {}
     tags_names = []
     tags.each do |t|
-      cache[t.name] = t
       tags_names << t.name
     end
-    posts_count = fetch_tags tags_names, cache
+    posts_count = fetch_tags(tags_names)
 
     flash[:notice] = "Fetched #{tags_names.join(', ')}: #{posts_count} posts added"
     redirect '/'
   end
 
+  # in case we do a refresh
   get '/fetch_next_tags' do
     redirect '/'
   end
-
 
   post '/skip_unposted' do
     check_logged
@@ -278,7 +255,7 @@ class TumblrMachine < Sinatra::Base
         where(:id => params[:id]).
         first
     if post
-      reblog post
+      reblog(post)
       "Posted #{post.tumblr.url}/post/#{post.id}"
     else
       [404, 'Post not found']
@@ -289,9 +266,7 @@ class TumblrMachine < Sinatra::Base
   post '/clean' do
     check_logged
 
-    Post.where('fetched < ?', (DateTime.now - 15)).each do |post|
-      post.destroy(:transaction => true)
-    end
+    Post.where('fetched < ?', (DateTime.now - 15)).delete
 
     DATABASE.transaction do
       Tumblr.
@@ -301,9 +276,9 @@ class TumblrMachine < Sinatra::Base
     end
 
     DATABASE.transaction do
+      # Garbage collect edited tag
       Tag.
           where(:fetch => false, :value => 0).
-          where('id not in (select distinct(tag_id) from posts_tags)').
           delete
     end
 
@@ -332,112 +307,28 @@ class TumblrMachine < Sinatra::Base
   # recalculate score of existing posts
   get '/recalculate_scores' do
     check_logged_ajax
-
-    DATABASE.run 'update posts set score = (select sum(tags.value) from tags where tags.id in (select posts_tags.tag_id from posts_tags where posts_tags.post_id = posts.id))'
+    recalculate
     'OK'
-  end
-
-  get '/api' do
-    check_logged
-
-    posts = Post.
-        where('skip is not ?', true).
-        where('posted = ?', false).
-        where('tumblr_id not in (?)', skippable_tumblr_ids).
-        where('score >= ?', MIN_SCORE).to_a
-
-    posts_by_id = {}
-    posts.each do |post|
-      posts_by_id[post.id] = post
-      post.loaded_tags = []
-    end
-
-    tumblrs = {}
-    Tumblr.where(:id => posts.collect { |post| post.tumblr_id }).each do |tumblr|
-      tumblrs[tumblr.id] = tumblr
-    end
-
-    tags_id = Set.new
-    posts_by_id.keys.each_slice(1000) do |posts_ids_slices|
-      DATABASE['select posts_tags.post_id as post_id, posts_tags.tag_id as tag_id from posts_tags where posts_tags.post_id in ?', posts_ids_slices].each do |result_line|
-        tags_id << result_line[:tag_id]
-        posts_by_id[result_line[:post_id]].loaded_tags << result_line[:tag_id]
-      end
-    end
-
-    tags_by_id = {}
-    tags_id.to_a.each_slice(1000) do |tags_ids_slices|
-      Tag.where(:id => tags_ids_slices).each do |tag|
-        tags_by_id[tag.id] = tag
-      end
-    end
-
-    posts_result = posts.collect do |post|
-      post_tags = {}
-      post.loaded_tags.each do |tag_id|
-        tag = tags_by_id[tag_id]
-        post_tags[tag.name] = tag.value
-      end
-      tumblr = tumblrs[post.tumblr_id]
-      {
-          :id => post.id.to_s,
-          :tumblr_name => tumblr.name,
-          :tumblr_url => tumblr.url,
-          :href => "#{tumblrs[post.tumblr_id].url}/post/#{post.id}",
-          :image_url => post.img_url,
-          :score => post.score,
-          :timestamp => post.fetched.to_datetime,
-          :tags => post_tags,
-          :height => post.height,
-          :width => post.width
-      }
-    end
-
-    headers 'Cache-Control' => 'no-cache, must-revalidate'
-    json :data => posts_result.to_a
-  end
-
-  post '/api/skip_unposted' do
-    check_logged
-
-    Post.where(:id => params[:posts].split(',').collect { |i| i.to_i }).
-        where(:skip => nil).
-        where(:posted => false).
-        update({:skip => true})
-    [204, 'OK']
-  end
-
-  post '/api/reblog/:id' do
-    check_logged
-
-    post = Post.
-        where(:id => params[:id]).
-        first
-    if post
-      reblog post
-      [204, "Posted #{post.tumblr.url}/post/#{post.id}"]
-    else
-      [404, 'Post not found']
-    end
   end
 
   private
 
-  # Fetch a tag.
+  # Fetch tags.
   # @param tags_names [Array<String>] the tags names
-  # @param fetched_tags [Hash<String, Tag>] of fetched_tags tags already fetched indexed by their names
   # @return [Integer] the number of fetched posts
-  def fetch_tags(tags_names, fetched_tags = {})
+  def fetch_tags(tags_names)
     posts_count = 0
 
     hydra = Typhoeus::Hydra.new({:max_concurrency => 2})
-    found_posts = TumblrApi.fetch_tags(ENV['consumer_key'], tags_names)
+    found_posts = TumblrApi.fetch_tags_from_tumblr(ENV['consumer_key'], tags_names)
+
+    tags_with_score = tags_with_score_in_hash
 
     fingerprints = {}
     semaphore = Mutex.new
     found_posts.each do |found_post|
       begin
-        if (post = create_post(found_post, fetched_tags))
+        if (post = create_post(found_post, tags_with_score))
           posts_count += 1
           if post.img_url && (post.score >= MIN_SCORE)
             hydra.queue(create_storage_request(post, fingerprints, semaphore))
@@ -473,7 +364,7 @@ class TumblrMachine < Sinatra::Base
   # Create the request to store an image
   # @params post [Post] the post we do the stuff for
   # @param fingerprints [Hash<Integer, String>] hash to add fingerprint
-  # @params semaphore [Mutex] a mutux to synchronize
+  # @params semaphore [Mutex] a mutex to synchronize
   # @return []Typhoeus::Request} the Request to add
   def create_storage_request(post, fingerprints, semaphore)
     request = Typhoeus::Request.new post.img_url
@@ -500,9 +391,9 @@ class TumblrMachine < Sinatra::Base
 
   # Create a post if it does not exist
   # @param values [Hash] the values used to create the post
-  # @fetched_tags [Hash<String, Tag>] tags already fetched to be used as a cache
+  # @fetched_tags [Hash<String, Integer>] fetched tags to be used
   # @return [Post] the Post object
-  def create_post(values, fetched_tags)
+  def create_post(values, tags_with_score)
     DATABASE.transaction do
       if Post.where(:id => values[:id]).empty? && (values[:tumblr_name] != ENV['tumblr_name'])
         post_db = Post.new
@@ -528,23 +419,9 @@ class TumblrMachine < Sinatra::Base
           post_db.skip = true
         end
 
+        post_db.tags = values[:tags]
+        post_db.score = values[:tags].collect{|tag| tags_with_score[tag] || 0}.inject(0, :+)
         post_db.save
-
-        score = 0
-        values[:tags].each do |tag_name|
-          if (tag = fetched_tags[tag_name])
-            score += tag.value
-          elsif (tag = Tag.first(:name => tag_name))
-            fetched_tags[tag_name] = tag
-            score += tag.value
-          else
-            tag = Tag.create({:name => tag_name, :fetch => false, :value => 0})
-            fetched_tags[tag_name] = tag
-          end
-          post_db.add_tag tag
-        end
-
-        post_db.update({:score => score})
         post_db
       else
         nil
@@ -574,9 +451,18 @@ class TumblrMachine < Sinatra::Base
   end
 
   def skippable_tumblr_ids
-    Tumblr.
-        select(:id).
-        where('tumblrs.last_reblogged_post is not null and tumblrs.last_reblogged_post > ?', (DateTime.now << 1))
+    @skippable_tumblr_ids ||=
+        Tumblr.
+            select(:id).
+            where('tumblrs.last_reblogged_post is not null and tumblrs.last_reblogged_post > ?', (DateTime.now << 1))
+  end
+
+  def tags_with_score_in_hash
+    Tag.where('value != ?', 0).to_hash(:name, :value)
+  end
+
+  def recalculate
+    DATABASE.run 'update posts set score = (select sum(tags.value) from tags where tags.name = any(posts.tags))'
   end
 
 end

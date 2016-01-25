@@ -1,22 +1,24 @@
 # Tumblr Machine
 
-A Tumblr feedreader and reblogging tool written in ruby.
+A Tumblr feedreader and reblogging tool written in ruby, requires PostgreSQL.
 
 Setup a list of interesting tags with a score and it will pull new posts from the tags and display the ones with the highest score, and you'll be able to reblog the one you likes with a single click.
 
-Can process the linked images to eliminates duplicates (see bellow).
+Eliminates duplicated images (see bellow).
 
 Code should be easy to hack on, contact me for any question.
 
-I'm using an {ssl client certificate}[http://en.wikipedia.org/wiki/Transport_Layer_Security#Client-authenticated_TLS_handshake]
+I'm using an (ssl client certificate)[http://en.wikipedia.org/wiki/Transport_Layer_Security#Client-authenticated_TLS_handshake]
 for authentication which requires some configuration on the frontal nginx / apache.
 
 # Instructions
 
+- install (pgsimilarity)[http://pgsimilarity.projects.pgfoundry.org] on your PostgreSQL server
 - deploy the application on your server
-- register a tumblr application at http://www.tumblr.com/oauth/apps and get the OAuth consumer key and secret key, for the callback url use http://your_webiste/callback
+- register a Tumblr application at http://www.tumblr.com/oauth/apps and get the OAuth consumer key and secret key, for the callback url use http://your_webiste/callback
 - set the environment variables (see bellow)
-- connect to the server (the database structure will be created automatically) and setup the tags
+- create the database schema ``sequel -m migrations postgres://LOGIN:PASSWORD@HOST:5432/SCHEMA`` 
+- open the application and setup the tags
 - schedule an http call to /fetch_next_tags_external to retrieve the latest posts for the tags
 
 # Environment variables
@@ -32,7 +34,7 @@ for authentication which requires some configuration on the frontal nginx / apac
 
 Except files with their own copyright license:
 
-Copyright (c) 2011 - 2015, Julien Kirch
+Copyright (c) 2011 - 2016, Julien Kirch
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the

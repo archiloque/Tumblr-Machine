@@ -19,7 +19,6 @@ function editTag(name, value, fetch) {
     $('input[name=tagName]').val(name);
     $('input[name=tagValue]').val(value);
     $('input[name=tagFetch]').attr('checked', fetch == 0);
-
 }
 
 function reblog(id) {
@@ -38,8 +37,8 @@ function seeTags() {
 }
 
 function seeAllTags() {
-    $("#otherTags").remove();
-    $.get('/other_tags', function (data) {
+    $("#allTags").remove();
+    $.get('/all_tags', function (data) {
         $('body').append(data);
         $("#tagsTableOther tr").click(function (e) {
             var children = $(e.currentTarget).children();

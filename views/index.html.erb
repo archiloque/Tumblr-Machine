@@ -55,7 +55,7 @@
             <%= "<a class=\"button\" onclick=\"reblog(#{post.id}); return false;\" title=\"Reblog\">Reblog</a>" %>
             <%= "<a title=\"Go to blog\" target=\"_blank\" href='#{post.loaded_tumblr.url}'>#{post.loaded_tumblr.name}</a>" %>
             –
-            <%= post.loaded_tags.collect { |t| TumblrApi.tag_to_link(t.name, ("#{t.name}#{(t.value != 0) ? "(#{t.value})" : ''}")) }.join(', ') %>
+            <%= post.loaded_tags.collect { |t| TumblrApi.tag_to_link(t[:name], ("#{t[:name]}#{(t[:value] != 0) ? "(#{t[:value]})" : ''}")) }.join(', ') %>
           </div>
         </div>
     <% end %>
@@ -67,7 +67,7 @@
   <br>
 </form>
 <div id="infos">
-  <%= "#{@waiting_posts} waiting posts" %>
+  <%= "#{@number_waiting_posts} waiting posts" %>
   <br>
   <%= "#{@total_posts} posts " %>
 </div>

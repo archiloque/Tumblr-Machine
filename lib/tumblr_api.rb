@@ -11,7 +11,7 @@ class TumblrApi
   # Fetch the last images posts for a list of tags
   # Note: the the found tags are normalized (lower case and uniq)
   # @return [Hash] list of posts
-  def self.fetch_tags(api_key, tags_names, &block)
+  def self.fetch_tags_from_tumblr(api_key, tags_names, &block)
     semaphore = Mutex.new
     posts = []
     hydra = Typhoeus::Hydra.new({:max_concurrency => 4})
@@ -79,7 +79,7 @@ class TumblrApi
   # Parameters:
   # - tag       the tag name
   # - link_text the link text, if null use the tag name
-  def self.tag_to_link tag, link_text = tag
+  def self.tag_to_link(tag, link_text = tag)
     "<a title='View the tag' target='_blank' href='http://www.tumblr.com/tagged/#{tag.sub(' ', '+')}'>#{link_text}</a>"
   end
 
