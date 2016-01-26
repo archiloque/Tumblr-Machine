@@ -215,10 +215,9 @@ order by tags.fetch desc, tags.value desc, c desc, tags.name asc']
   # Fetch a tag
   get '/fetch/:tag_name' do
     check_logged
-
-    tag = Tag.where(:name => params[:tag_name]).first
-    posts_count = fetch_tags([tag.name])
-    flash[:notice] = "Fetched [#{params[:tag_name]}], #{posts_count} posts added"
+    tag_name = params[:tag_name]
+    posts_count = fetch_tags(tag_name)
+    flash[:notice] = "Fetched [#{tag_name}], #{posts_count} posts added"
     redirect '/'
   end
 
