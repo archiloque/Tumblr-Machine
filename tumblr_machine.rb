@@ -224,29 +224,16 @@ order by tags.fetch desc, tags.value desc, c desc, tags.name asc']
 
   # fetch next tag from external source
   get '/fetch_next_tags_external' do
-    tags = Tag.where(:fetch => true).order(Sequel.asc(:last_fetch))
-    tags_names = []
-    tags.each do |t|
-      tags_names << t.name
-    end
-    fetch_tags(tags_names)
+    posts_count = fetch_all_tags
     headers 'Cache-Control' => 'no-cache, must-revalidate'
-    'OK'
+    "Fetched tags, #{posts_count} posts added"
   end
-
 
   # fetch content of next tags
   post '/fetch_next_tags' do
     check_logged
-
-    tags = Tag.where(:fetch => true).order(Sequel.asc(:last_fetch))
-    tags_names = []
-    tags.each do |t|
-      tags_names << t.name
-    end
-    posts_count = fetch_tags(tags_names)
-
-    flash[:notice] = "Fetched #{tags_names.join(', ')}: #{posts_count} posts added"
+    posts_count = fetch_all_tags
+    flash[:notice] = "Fetched tags, #{posts_count} posts added"
     redirect '/'
   end
 
@@ -329,6 +316,10 @@ order by tags.fetch desc, tags.value desc, c desc, tags.name asc']
   end
 
   private
+
+  def fetch_all_tags
+    fetch_tags(Tag.where(:fetch => true).order(Sequel.asc(:last_fetch)).select_map(:name))
+  end
 
   # Fetch tags.
   # @param tags_names [Array<String>] the tags names
