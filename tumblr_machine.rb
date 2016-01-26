@@ -334,7 +334,7 @@ order by tags.fetch desc, tags.value desc, c desc, tags.name asc']
       begin
         if (post = create_post(found_post, tags_with_score))
           posts_count += 1
-          if post.img_url && (post.score >= MIN_SCORE)
+          if post.img_url && (post.score >= MIN_SCORE) && (!post.img_saved)
             hydra.queue(create_storage_request(post, fingerprints, semaphore))
           end
         end
@@ -398,38 +398,44 @@ order by tags.fetch desc, tags.value desc, c desc, tags.name asc']
   # @fetched_tags [Hash<String, Integer>] fetched tags to be used
   # @return [Post] the Post object
   def create_post(values, tags_with_score)
+    if values[:tumblr_name] == ENV['tumblr_name']
+      return nil
+    end
+
+    tumblr_name = values[:tumblr_name]
+    tumblr_url = values[:tumblr_url]
     DATABASE.transaction do
-      if Post.where(:tumblr_post_id => values[:id]).empty? && (values[:tumblr_name] != ENV['tumblr_name'])
-        post_db = Post.new
-        post_db.tumblr_post_id = values[:id]
-
-        if (tumblr = Tumblr.first(:url => values[:tumblr_url]))
-          if tumblr.name != values[:tumblr_name]
-            tumblr.update(:name => values[:tumblr_name])
-          end
-        else
-          tumblr = Tumblr.create(:name => values[:tumblr_name], :url => values[:tumblr_url])
-        end
-        post_db.tumblr = tumblr
-        post_db.fetched = DateTime.now
-        post_db.reblog_key = values[:reblog_key]
-
-        if values[:img_url]
-          post_db.img_url = values[:img_url]
-          post_db.height = values[:height]
-          post_db.width = values[:width]
-        else
-          post_db.skip = true
-        end
-
-        post_db.tags = values[:tags]
-        post_db.score = values[:tags].collect { |tag| tags_with_score[tag] || 0 }.inject(0, :+)
-        post_db.save
-        post_db
-      else
-        nil
+      DATABASE['INSERT INTO tumblrs (name, url) SELECT ?, ? WHERE NOT EXISTS (SELECT id FROM tumblrs WHERE url = ?)', tumblr_name, tumblr_url, tumblr_url].all
+    end
+    tumblr = Tumblr.first(:url => values[:tumblr_url])
+    if tumblr.name != tumblr_name
+      DATABASE.transaction do
+        tumblr.update(:name => values[:tumblr_name])
       end
     end
+
+    posts_insert_params = [
+        [:tumblr_post_id, values[:id]],
+        [:tumblr_id, tumblr.id],
+        [:fetched, DateTime.now],
+        [:reblog_key, values[:reblog_key]],
+        [:tags, Sequel.pg_array(values[:tags], :text)],
+        [:score, values[:tags].collect { |tag| tags_with_score[tag] || 0 }.inject(0, :+)]
+    ]
+    if values[:img_url]
+      posts_insert_params << [:img_url, values[:img_url]]
+      posts_insert_params << [:height, values[:height]]
+      posts_insert_params << [:width, values[:width]]
+    else
+      posts_insert_params << [:skip, true]
+    end
+
+    post_insert_query = "INSERT INTO posts (#{posts_insert_params.collect { |param| param[0] }.join(', ')}) SELECT #{Array.new(posts_insert_params.length, '?').join(', ')} WHERE NOT EXISTS (SELECT id FROM posts WHERE tumblr_post_id = ?)"
+
+    DATABASE.transaction do
+      DATABASE[post_insert_query, *posts_insert_params.collect { |param| param[1] }, values[:id]].all
+    end
+    Post.first(:tumblr_post_id => values[:id])
   end
 
   # Reblog a post
