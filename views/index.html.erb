@@ -43,7 +43,7 @@
         <% posts_ids << post.id %>
         <div class="post">
           <div class="postImg">
-            <%= "<a target=\"_blank\" href=\"#{post.loaded_tumblr.url}/post/#{post.id}\">" %>
+            <%= "<a target=\"_blank\" href=\"#{post.loaded_tumblr.url}/post/#{post.tumblr_post_id}\">" %>
             <% if post.height %>
                 <%= "<img src=\"#{img_src(post, @stored_images_dir)}\" height=\"#{post.height}px\" width=\"#{post.width}px\">" %>
             <% else %>
