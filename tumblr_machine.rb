@@ -244,7 +244,6 @@ order by tags.fetch desc, tags.value desc, c desc, tags.name asc']
   post '/skip_unposted' do
     check_logged
     Post.where(:id => params[:posts].split(',').collect { |i| i.to_i }).
-        where(:skip => nil).
         where(:posted => false).
         update({:skip => true})
     redirect '/'
